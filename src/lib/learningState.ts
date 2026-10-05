@@ -23,6 +23,8 @@ export type AssistanceState = {
   repeatedDifficulty: number;
 };
 
+export type ExplanationInfo = { target: string; status: string; provider: string; requests: number };
+
 export type LearningState = {
   concept: string;
   currentExpression?: string;
@@ -36,6 +38,7 @@ export type LearningState = {
   submittedExpression?: string;
   canonicalExpression?: string;
   assistance?: AssistanceState;
+  explanation?: ExplanationInfo;
   misconception: string;
   repeatedMisconceptionCount: number;
   hintLevel: { current: number; max: number };

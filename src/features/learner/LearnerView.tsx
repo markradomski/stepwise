@@ -1,6 +1,7 @@
 import type { Ref } from 'react';
 import { Button } from '../../components/Button/Button';
 import { CompletionPanel } from '../../components/CompletionPanel/CompletionPanel';
+import { ExplainSlot, type ExplainSlotProps } from '../../components/ExplanationSurface/ExplanationSurface';
 import { FeedbackMessage, type FeedbackKind } from '../../components/FeedbackMessage/FeedbackMessage';
 import { HelpSurface, type HelpSurfaceProps } from '../../components/HelpSurface/HelpSurface';
 import { HintAction } from '../../components/HintAction/HintAction';
@@ -30,6 +31,7 @@ export type LearnerViewProps = {
     launcher: { label: string; onClick?: () => void; ref?: Ref<HTMLButtonElement> };
     surface?: HelpSurfaceProps;
   };
+  explain?: { feedback?: ExplainSlotProps; step?: ExplainSlotProps };
   inspector?: LearningState;
   preview?: boolean;
   guideOpen?: boolean;
@@ -44,6 +46,7 @@ export function LearnerView({
   primaryAction,
   completion,
   help,
+  explain,
   inspector,
   preview,
   guideOpen,
@@ -71,13 +74,16 @@ export function LearnerView({
           </h2>
           <ol className={styles.steps} aria-label="Working so far">
             {lines.map((line, index) => (
-              <WorkingStep key={index} {...line} rail={railFor(chain[index])} />
+              <WorkingStep key={index} {...line} rail={railFor(chain[index])}>
+                {explain?.step && index === lines.length - 1 && <ExplainSlot {...explain.step} preview={preview} />}
+              </WorkingStep>
             ))}
           </ol>
           <div role="status" className={`${styles.feedbackSlot} ${lastStepNeedsWork ? styles.attached : ''}`}>
             {feedback && (
               <div className={styles.help}>
                 <FeedbackMessage {...feedback} />
+                {explain?.feedback && <ExplainSlot {...explain.feedback} preview={preview} />}
               </div>
             )}
             {completion && <CompletionPanel {...completion} preview={preview} />}

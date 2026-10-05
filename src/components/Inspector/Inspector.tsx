@@ -48,6 +48,17 @@ export function Inspector({ state }: Props) {
           </dl>
         </section>
       )}
+      {state.explanation && (
+        <section>
+          <h3 className="overline">Explanation</h3>
+          <dl>
+            <LearningStateRow label="Target" value={state.explanation.target} />
+            <LearningStateRow label="Status" value={state.explanation.status} />
+            <LearningStateRow label="Provider" value={state.explanation.provider} />
+            <LearningStateRow label="Explanations requested" value={String(state.explanation.requests)} />
+          </dl>
+        </section>
+      )}
       {state.session && (
         <section>
           <h3 className="overline">Session</h3>

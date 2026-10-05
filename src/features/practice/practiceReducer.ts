@@ -15,7 +15,8 @@ export type PracticeAction =
   | { type: 'HINT_REQUESTED' }
   | { type: 'EXAMPLE_REQUESTED' }
   | { type: 'NEXT_STEP_REQUESTED' }
-  | { type: 'HELP_REOPENED'; content: AssistanceContent };
+  | { type: 'HELP_REOPENED'; content: AssistanceContent }
+  | { type: 'EXPLANATION_REQUESTED'; key: string };
 
 function withEntry(state: PracticeState, update: (entry: AssistanceEntry) => AssistanceEntry) {
   return { ...state.assistance.history, [currentExpression(state)]: update(entryFor(state)) };
@@ -149,6 +150,10 @@ export function practiceReducer(state: PracticeState, action: PracticeAction): P
         completed: next === state.question.goal,
       };
     }
+
+    // Explanations are informational: they touch nothing but this record.
+    case 'EXPLANATION_REQUESTED':
+      return state.explained.includes(action.key) ? state : { ...state, explained: [...state.explained, action.key] };
 
     // Showing help that was already seen is a view, not a request, so it does not touch the usage counts.
     case 'HELP_REOPENED':

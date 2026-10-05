@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { MathExpression } from '../MathExpression/MathExpression';
 import { StatusIcon } from '../StatusIcon/StatusIcon';
 import styles from './WorkingStep.module.css';
@@ -13,13 +14,14 @@ type Props = {
   status: WorkingStepStatus;
   source?: WorkingStepSource;
   rail?: RailSegment;
+  children?: ReactNode;
 };
 
 const attemptStatus = { incorrect: 'Needs attention', unrecognised: 'Not recognised yet' };
 
 // Learner-accepted lines carry no label: they are just working. Only the given line, a
 // system-authored line and a rejected attempt say what they are.
-export function WorkingStep({ expression, status, source = 'learner', rail }: Props) {
+export function WorkingStep({ expression, status, source = 'learner', rail, children }: Props) {
   const kind = source === 'system' ? 'system' : status;
   const attempt = status === 'incorrect' || status === 'unrecognised';
   return (
@@ -40,6 +42,7 @@ export function WorkingStep({ expression, status, source = 'learner', rail }: Pr
       )}
       <MathExpression expression={expression} size="step" />
       {kind === 'accepted' && <span className="srOnly">Step accepted</span>}
+      {children && <div className={styles.attached}>{children}</div>}
     </li>
   );
 }

@@ -58,6 +58,8 @@ export type PracticeState = {
   lastResult?: ValidationResult;
   rejectedExpression?: string;
   assistance: Assistance;
+  // Explanation targets already requested in this question; a target counts once however often it is reopened.
+  explained: string[];
   usage: QuestionUsage;
   completed: boolean;
 };
@@ -71,6 +73,7 @@ export function createInitialPracticeState(question: PracticeQuestion): Practice
     submissions: 0,
     misconceptionCounts: {},
     assistance: noAssistance,
+    explained: [],
     usage: noUsage,
     completed: false,
   };

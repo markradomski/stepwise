@@ -1,3 +1,4 @@
+import { ExplainSlot, type ExplainSlotProps } from '../ExplanationSurface/ExplanationSurface';
 import { ReopenAction } from '../ReopenAction/ReopenAction';
 import { WorkedExample } from '../WorkedExample/WorkedExample';
 import styles from './HelpSurface.module.css';
@@ -9,11 +10,12 @@ export type HelpSurfaceProps = {
   example?: { before: string; after: string; explanation: string };
   forward?: { label: string; onClick?: () => void };
   prior?: { label: string; onClick?: () => void };
+  explain?: ExplainSlotProps;
   onClose?: () => void;
   preview?: boolean;
 };
 
-export function HelpSurface({ id, heading, message, example, forward, prior, onClose, preview }: HelpSurfaceProps) {
+export function HelpSurface({ id, heading, message, example, forward, prior, explain, onClose, preview }: HelpSurfaceProps) {
   const titleId = `${id}-title`;
   return (
     <section id={id} aria-labelledby={titleId} className={styles.surface}>
@@ -29,6 +31,7 @@ export function HelpSurface({ id, heading, message, example, forward, prior, onC
         {message && <p>{message}</p>}
         {example && <WorkedExample {...example} embedded />}
       </div>
+      {explain && <ExplainSlot {...explain} preview={preview} />}
       {(forward || prior) && (
         <div className={styles.actions}>
           {forward && (

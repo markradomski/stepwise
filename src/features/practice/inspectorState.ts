@@ -65,10 +65,13 @@ export function learningStateFromPractice(state: PracticeState): LearningState {
   };
 }
 
-export function learningStateFromSession(session: PracticeSessionState): LearningState {
+export type ExplanationSnapshot = { target: string; status: string; provider: string };
+
+export function learningStateFromSession(session: PracticeSessionState, explanation?: ExplanationSnapshot): LearningState {
   const summary = summariseSession(session);
   return {
     ...learningStateFromPractice(session.currentPractice),
+    explanation: explanation && { ...explanation, requests: summary.totalExplanationsRequested },
     masteryEstimate: summary.masteryEstimate,
     session: {
       question: `${summary.questionNumber} / ${summary.totalQuestions}`,

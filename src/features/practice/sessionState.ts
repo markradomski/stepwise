@@ -21,6 +21,7 @@ export type PracticeSessionState = {
   currentPractice: PracticeState;
   completed: boolean;
   masteryEstimate: number;
+  explanationsRequested: number;
 };
 
 export function createInitialSession(): PracticeSessionState {
@@ -30,6 +31,7 @@ export function createInitialSession(): PracticeSessionState {
     currentPractice: createInitialPracticeState(practiceQuestions[0]),
     completed: false,
     masteryEstimate: initialMasteryEstimate,
+    explanationsRequested: 0,
   };
 }
 
@@ -54,6 +56,7 @@ export type SessionSummary = {
   totalExamplesRequested: number;
   totalNextStepReveals: number;
   totalSkippedValidSteps: number;
+  totalExplanationsRequested: number;
   misconceptionTotals: Partial<Record<Misconception, number>>;
   masteryEstimate: number;
 };
@@ -83,6 +86,7 @@ export function summariseSession(session: PracticeSessionState): SessionSummary 
     totalExamplesRequested: sum((usage) => usage.exampleRequests),
     totalNextStepReveals: sum((usage) => usage.nextStepReveals),
     totalSkippedValidSteps: sum((usage) => usage.skippedValidSteps),
+    totalExplanationsRequested: session.explanationsRequested,
     misconceptionTotals,
     masteryEstimate: session.masteryEstimate,
   };

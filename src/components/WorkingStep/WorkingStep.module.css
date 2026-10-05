@@ -98,3 +98,8 @@
 .unrecognised .attemptStatus {
   font-weight: 600;
 }
+
+.attached {
+  grid-column: 2;
+  grid-row: 3;
+}

@@ -230,4 +230,33 @@ describe('session reducer', () => {
     session = apply(session, { type: 'HELP_REQUESTED' });
     expect(summariseSession(session).totalGenericHelpRequests).toBe(2);
   });
+
+  it('counts an explanation target once, keeps the total across questions and never touches mastery', () => {
+    let session = enter(createInitialSession(), 'x + 2 = 6');
+    const before = session.masteryEstimate;
+    session = apply(session, { type: 'EXPLANATION_REQUESTED', key: 'accepted|a|b' });
+    session = apply(session, { type: 'EXPLANATION_REQUESTED', key: 'accepted|a|b' });
+    expect(summariseSession(session).totalExplanationsRequested).toBe(1);
+    expect(session.masteryEstimate).toBe(before);
+    expect(session.currentPractice.usage).toEqual(createInitialSession().currentPractice.usage);
+
+    session = next(enter(session, 'x = 4'));
+    expect(summariseSession(session).totalExplanationsRequested).toBe(1);
+    session = apply(session, { type: 'EXPLANATION_REQUESTED', key: 'accepted|a|b' });
+    expect(summariseSession(session).totalExplanationsRequested).toBe(2);
+  });
+
+  it('resets the explanation total on Practice again', () => {
+    let session = apply(createInitialSession(), { type: 'EXPLANATION_REQUESTED', key: 'k' });
+    session = apply(fullSession(), { type: 'PRACTICE_AGAIN' });
+    expect(summariseSession(session).totalExplanationsRequested).toBe(0);
+    expect(session.currentPractice.explained).toEqual([]);
+  });
+
+  it('does not let explanation use change the result of a question', () => {
+    const plain = solveQuestion1(createInitialSession());
+    const explained = solveQuestion1(apply(createInitialSession(), { type: 'EXPLANATION_REQUESTED', key: 'k' }));
+    expect(explained.masteryEstimate).toBe(plain.masteryEstimate);
+    expect(explained.results[0]).toEqual(plain.results[0]);
+  });
 });

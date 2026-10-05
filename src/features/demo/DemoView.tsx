@@ -1,14 +1,33 @@
+import type { ExplainSlotProps } from '../../components/ExplanationSurface/ExplanationSurface';
 import { LearnerView } from '../learner/LearnerView';
-import type { DemoState } from './demoStates';
+import type { DemoExplain, DemoState } from './demoStates';
 
 type Props = { state: DemoState };
 
+const previewExplanationId = 'preview-explanation';
+
+function explainSlot(explain?: DemoExplain): ExplainSlotProps | undefined {
+  if (!explain) return undefined;
+  return {
+    action: { expanded: explain.open, controls: previewExplanationId },
+    surface: explain.open
+      ? {
+          id: previewExplanationId,
+          status: explain.unavailable ? 'unavailable' : 'ready',
+          title: explain.title,
+          body: explain.body,
+        }
+      : undefined,
+  };
+}
+
 export function DemoView({ state }: Props) {
-  const { input, help, ...view } = state;
+  const { input, help, explain, ...view } = state;
   return (
     <LearnerView
       {...view}
       input={input && { value: input.value, focused: input.state === 'focused' }}
+      explain={{ feedback: explainSlot(explain?.feedback), step: explainSlot(explain?.step) }}
       help={
         help && {
           launcher: { label: help.launcherLabel },

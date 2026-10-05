@@ -26,7 +26,11 @@ export function sessionReducer(session: PracticeSessionState, action: SessionAct
     default: {
       const currentPractice = practiceReducer(session.currentPractice, action);
       if (currentPractice === session.currentPractice) return session;
-      if (session.currentPractice.completed || !currentPractice.completed) return { ...session, currentPractice };
+      const explanationsRequested =
+        session.explanationsRequested + currentPractice.explained.length - session.currentPractice.explained.length;
+      if (session.currentPractice.completed || !currentPractice.completed) {
+        return { ...session, currentPractice, explanationsRequested };
+      }
 
       const result = resultFromPractice(currentPractice);
       return {

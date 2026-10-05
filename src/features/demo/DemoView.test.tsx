@@ -149,3 +149,30 @@ describe('help surface previews', () => {
     expect(screen.getByRole('button', { name: 'Need help?' })).toHaveAttribute('aria-expanded', 'false');
   });
 });
+
+describe('explanation previews', () => {
+  it('shows Explain this closed beside misconception feedback', () => {
+    renderState('11');
+    expect(screen.getByRole('button', { name: 'Explain this' })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByRole('region', { name: 'Explanation' })).not.toBeInTheDocument();
+  });
+
+  it('shows the misconception, accepted-step and suggested-step explanations open', () => {
+    for (const [id, title] of [
+      ['12', 'Why that step needs another look'],
+      ['13', 'Why that step works'],
+      ['14', 'Why this step works'],
+    ]) {
+      const { unmount } = renderState(id);
+      expect(within(screen.getByRole('region', { name: 'Explanation' })).getByText(title)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Close explanation' })).toBeDisabled();
+      unmount();
+    }
+  });
+
+  it('shows the safe fallback for an unavailable explanation', () => {
+    renderState('15');
+    expect(screen.getByRole('region', { name: 'Explanation' })).toHaveTextContent('I can’t add a useful explanation for this yet.');
+  });
+});
+

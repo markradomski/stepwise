@@ -2,6 +2,8 @@ import type { FeedbackKind } from '../../components/FeedbackMessage/FeedbackMess
 import type { WorkingStepSource, WorkingStepStatus } from '../../components/WorkingStep/WorkingStep';
 import type { LearningState } from '../../lib/learningState';
 
+export type DemoExplain = { open: boolean; title?: string; body?: string; unavailable?: boolean };
+
 export type DemoState = {
   id: string;
   title: string;
@@ -23,6 +25,7 @@ export type DemoState = {
       prior?: string;
     };
   };
+  explain?: { feedback?: DemoExplain; step?: DemoExplain };
   completed?: boolean;
   inspector?: LearningState;
 };
@@ -48,6 +51,22 @@ const partialDistributionState: DemoState = {
   help: { launcherLabel: 'Help' },
 };
 
+const firstMisconceptionState: DemoState = {
+    ...baseState,
+    id: '03',
+    shortTitle: 'First misconception',
+    title: 'First incorrect attempt',
+    workingSteps: [{ expression: '3x + 2 = 18', status: 'incorrect' }],
+    feedback: {
+      kind: 'error',
+      title: 'Have another look',
+      message: 'Check what the 3 multiplies inside the brackets.',
+    },
+    input: { value: '3x + 2 = 18', state: 'empty' },
+    primaryAction: { label: 'Check step' },
+    help: { launcherLabel: 'Need help?' },
+  };
+
 export const demoStates: DemoState[] = [
   {
     ...baseState,
@@ -68,21 +87,7 @@ export const demoStates: DemoState[] = [
     input: { value: '', state: 'focused' },
     primaryAction: { label: 'Check step' },
   },
-  {
-    ...baseState,
-    id: '03',
-    shortTitle: 'First misconception',
-    title: 'First incorrect attempt',
-    workingSteps: [{ expression: '3x + 2 = 18', status: 'incorrect' }],
-    feedback: {
-      kind: 'error',
-      title: 'Have another look',
-      message: 'Check what the 3 multiplies inside the brackets.',
-    },
-    input: { value: '3x + 2 = 18', state: 'empty' },
-    primaryAction: { label: 'Check step' },
-    help: { launcherLabel: 'Need help?' },
-  },
+  firstMisconceptionState,
   partialDistributionState,
   {
     ...baseState,
@@ -193,6 +198,61 @@ export const demoStates: DemoState[] = [
     input: { value: '', state: 'focused' },
     primaryAction: { label: 'Check step' },
     help: { launcherLabel: 'Need help?' },
+  },
+  { ...firstMisconceptionState, id: '11', shortTitle: 'Explain closed', title: 'Misconception with Explain this', explain: { feedback: { open: false } } },
+  {
+    ...firstMisconceptionState,
+    id: '12',
+    shortTitle: 'Explanation open',
+    title: 'Misconception explanation open',
+    explain: {
+      feedback: {
+        open: true,
+        title: 'Why that step needs another look',
+        body: 'The 3 needs to multiply both terms inside the brackets. In 3(x + 2), the 3 multiplies x and 2, so expanding gives 3x + 6.',
+      },
+    },
+  },
+  {
+    ...baseState,
+    id: '13',
+    shortTitle: 'Accepted explained',
+    title: 'Accepted step explanation open',
+    workingSteps: [{ expression: '3x + 6 = 18', status: 'accepted' }],
+    input: { value: '', state: 'focused' },
+    primaryAction: { label: 'Check step' },
+    help: { launcherLabel: 'Need help?' },
+    explain: {
+      step: {
+        open: true,
+        title: 'Why that step works',
+        body: 'Multiplying the 3 by both x and 2 expands the brackets without changing the value, so 3(x + 2) = 18 becomes 3x + 6 = 18.',
+      },
+    },
+  },
+  {
+    ...baseState,
+    id: '14',
+    shortTitle: 'Suggested explained',
+    title: 'Suggested next step explanation open',
+    workingSteps: [{ expression: '3x + 6 = 18', status: 'accepted', source: 'system' }],
+    input: { value: '', state: 'focused' },
+    primaryAction: { label: 'Check step' },
+    help: { launcherLabel: 'Need help?' },
+    explain: {
+      step: {
+        open: true,
+        title: 'Why this step works',
+        body: 'Multiplying the 3 by both x and 2 expands the brackets without changing the value, so 3(x + 2) = 18 becomes 3x + 6 = 18.',
+      },
+    },
+  },
+  {
+    ...firstMisconceptionState,
+    id: '15',
+    shortTitle: 'Explanation unavailable',
+    title: 'Explanation unavailable',
+    explain: { feedback: { open: true, unavailable: true } },
   },
 ];
 
