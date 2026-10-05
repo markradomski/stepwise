@@ -28,7 +28,11 @@ The learner UI follows the Figma prototype. The default route is a working pract
 - progressive scaffolding: a hint, then a worked example, then a system-provided next step, each revealed only when the situation calls for it
 - a distinction between a correct answer and evidence of reasoning: a correct final answer that skips the working is acknowledged but doesn't complete the question
 
-Use the selector at the bottom left to switch views. `?inspector=1` shows the learning-state inspector beside the live question. `?state=01` to `?state=06` render the static designed states for visual review. Narrow the viewport to review the mobile layout.
+Developer note:
+
+- `/` is the live interactive app, with nothing but the product on screen. `?inspector=1` adds the learning-state inspector.
+- `?dev=1` shows the live app with development navigation.
+- `?state=01` to `?state=06` are static visual previews. They show the development navigation and a "Static demo preview" banner, and their controls are disabled. "Return to Live" goes back to `/`.
 
 ## Getting started
 

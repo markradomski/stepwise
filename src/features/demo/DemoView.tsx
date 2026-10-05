@@ -9,6 +9,7 @@ export function DemoView({ state }: Props) {
     <LearnerView
       {...view}
       input={input && { value: input.value, focused: input.state === 'focused' }}
+      preview
     />
   );
 }

@@ -90,18 +90,17 @@ describe('accessibility', () => {
     expect(screen.getByRole('textbox', { name: 'Write the equation after your next step' })).toBeInTheDocument();
   });
 
-  it('makes actions keyboard focusable', () => {
+  it('disables the controls of a static fixture natively', () => {
     renderState('03');
     for (const name of ['Check step', 'Need a hint?']) {
-      const button = screen.getByRole('button', { name });
-      button.focus();
-      expect(button).toHaveFocus();
+      expect(screen.getByRole('button', { name })).toBeDisabled();
     }
+    expect(screen.getByRole('textbox', { name: 'Write the equation after your next step' })).toBeDisabled();
   });
 
-  it('moves focus to the next input when a step has just been accepted', () => {
-    renderState('02');
-    expect(screen.getByLabelText('Write the equation after your next step')).toHaveFocus();
+  it('keeps the entered value visible in the disabled input of a fixture', () => {
+    renderState('03');
+    expect(screen.getByRole('textbox')).toHaveValue('3x + 2 = 18');
   });
 
   it('states step status in text, not colour alone', () => {

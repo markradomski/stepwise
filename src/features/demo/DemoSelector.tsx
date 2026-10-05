@@ -1,39 +1,48 @@
+import { DemoLink } from './DemoLink';
+import { devLiveHref, inspectorToggleHref, staticPreviewHref } from './demoRoute';
 import { demoStates } from './demoStates';
 import styles from './DemoSelector.module.css';
 
-type Props = { activeId: string | null; inspectorOn: boolean };
+type Props = {
+  demoStateId: string | null;
+  inspectorOn: boolean;
+  onNavigate: (href: string) => void;
+};
 
-export function DemoSelector({ activeId, inspectorOn }: Props) {
-  const live = activeId === null;
+export function DemoSelector({ demoStateId, inspectorOn, onNavigate }: Props) {
+  const isLive = demoStateId === null;
   return (
     <nav className={styles.selector} aria-label="Demo controls">
-      <span className={styles.heading}>View</span>
+      <span className={styles.tag}>Dev</span>
+      <DemoLink
+        href={devLiveHref(inspectorOn)}
+        onNavigate={onNavigate}
+        className={styles.link}
+        current={isLive}
+        title="Interactive practice"
+      >
+        Live
+      </DemoLink>
+      {isLive && (
+        <DemoLink href={inspectorToggleHref(inspectorOn)} onNavigate={onNavigate} className={styles.link}>
+          Inspector {inspectorOn ? 'off' : 'on'}
+        </DemoLink>
+      )}
+      <span className={styles.group}>Static previews</span>
       <ul className={styles.list}>
-        <li>
-          <a className={styles.link} href={inspectorOn ? '?inspector=1' : '?'} aria-current={live ? 'page' : undefined}>
-            Live
-          </a>
-        </li>
-        {demoStates.map(({ id, title }) => (
+        {demoStates.map(({ id, shortTitle, title }) => (
           <li key={id}>
-            <a
+            <DemoLink
+              href={staticPreviewHref(id)}
+              onNavigate={onNavigate}
               className={styles.link}
-              href={`?state=${id}`}
-              title={title}
-              aria-label={`${id} ${title}`}
-              aria-current={id === activeId ? 'page' : undefined}
+              current={id === demoStateId}
+              title={`Static preview: ${title}`}
             >
-              {id}
-            </a>
+              {id} {shortTitle}
+            </DemoLink>
           </li>
         ))}
-        {live && (
-          <li>
-            <a className={styles.link} href={inspectorOn ? '?' : '?inspector=1'}>
-              Inspector {inspectorOn ? 'off' : 'on'}
-            </a>
-          </li>
-        )}
       </ul>
     </nav>
   );

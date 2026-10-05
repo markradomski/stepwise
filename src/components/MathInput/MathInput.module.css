@@ -18,7 +18,8 @@
   background: var(--color-surface);
 }
 
-.field:focus-within {
+.field:focus-within,
+.showFocus {
   outline: 3px solid var(--color-focus);
   outline-offset: 2px;
 }
@@ -30,6 +31,13 @@
   border: 0;
   background: transparent;
   font: var(--font-math-step);
+}
+
+.input:disabled {
+  color: inherit;
+  -webkit-text-fill-color: currentColor;
+  opacity: 1;
+  cursor: default;
 }
 
 .input:focus {

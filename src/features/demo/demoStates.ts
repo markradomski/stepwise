@@ -5,6 +5,7 @@ import type { LearningState } from '../../lib/learningState';
 export type DemoState = {
   id: string;
   title: string;
+  shortTitle: string;
   progress: { current: number; total: number; complete?: boolean };
   question: { instruction: string; expression: string };
   workingSteps: Array<{ expression: string; status: WorkingStepStatus }>;
@@ -24,6 +25,7 @@ const baseState = {
 const partialDistributionState: DemoState = {
   ...baseState,
   id: '04',
+  shortTitle: 'Repeated misconception',
   title: 'Repeated misconception',
   workingSteps: [{ expression: '3x + 2 = 18', status: 'incorrect' }],
   feedback: {
@@ -40,6 +42,7 @@ export const demoStates: DemoState[] = [
   {
     ...baseState,
     id: '01',
+    shortTitle: 'Untouched',
     title: 'Untouched question',
     workingSteps: [],
     input: { value: '', state: 'empty' },
@@ -48,6 +51,7 @@ export const demoStates: DemoState[] = [
   {
     ...baseState,
     id: '02',
+    shortTitle: 'Accepted',
     title: 'Valid step accepted',
     workingSteps: [{ expression: '3x + 6 = 18', status: 'accepted' }],
     input: { value: '', state: 'focused' },
@@ -56,6 +60,7 @@ export const demoStates: DemoState[] = [
   {
     ...baseState,
     id: '03',
+    shortTitle: 'First misconception',
     title: 'First incorrect attempt',
     workingSteps: [{ expression: '3x + 2 = 18', status: 'incorrect' }],
     feedback: {
@@ -71,6 +76,7 @@ export const demoStates: DemoState[] = [
   {
     ...baseState,
     id: '05',
+    shortTitle: 'Complete',
     title: 'Completed question',
     progress: { current: 2, total: 3, complete: true },
     workingSteps: [
@@ -85,6 +91,7 @@ export const demoStates: DemoState[] = [
   {
     ...partialDistributionState,
     id: '06',
+    shortTitle: 'Inspector',
     title: 'Learning State inspector',
     inspector: {
       concept: 'Linear equations',
@@ -110,4 +117,10 @@ export function getDemoState(id: string): DemoState {
   const state = demoStates.find((candidate) => candidate.id === id);
   if (!state) throw new Error(`Unknown demo state: ${id}`);
   return state;
+}
+
+// State 06 is state 04 plus its inspector, so ?inspector=1 can add it to 04 as well.
+export function withRequestedInspector(state: DemoState, inspectorOn: boolean): DemoState {
+  if (!inspectorOn || state.inspector || state.id !== '04') return state;
+  return { ...state, inspector: demoStates.find((candidate) => candidate.id === '06')?.inspector };
 }

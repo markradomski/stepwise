@@ -1,0 +1,10 @@
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Shown above the learner view but placed after it, so keyboard and screen-reader users reach the product first. */
+.devTools {
+  order: -1;
+}

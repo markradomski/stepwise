@@ -1,7 +1,7 @@
 .stage {
   --gutter: var(--space-5);
   position: relative;
-  min-height: 100vh;
+  flex: 1;
 }
 
 .column {

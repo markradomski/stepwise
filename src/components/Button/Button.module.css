@@ -52,3 +52,24 @@
   background: var(--color-surface);
   border-color: var(--color-border);
 }
+
+/* Static previews are disabled for real but keep the designed look. */
+.preview:disabled {
+  cursor: default;
+}
+
+.primary.preview:disabled {
+  background: var(--color-action);
+  border-color: var(--color-action);
+  color: var(--color-action-text);
+}
+
+.secondary.preview:disabled {
+  background: var(--color-surface);
+  border-color: var(--color-border-strong);
+  color: var(--color-text);
+}
+
+.text.preview:disabled {
+  color: var(--color-action);
+}

@@ -28,6 +28,7 @@ export type LearnerViewProps = {
   primaryAction?: { label: string; disabled?: boolean; onClick?: () => void; focusKey?: number };
   secondaryAction?: { label: string; emphasis?: 'quiet' | 'prominent'; onClick?: () => void };
   inspector?: LearningState;
+  preview?: boolean;
 };
 
 export function LearnerView({
@@ -41,6 +42,7 @@ export function LearnerView({
   primaryAction,
   secondaryAction,
   inspector,
+  preview,
 }: LearnerViewProps) {
   const lastStepStatus = workingSteps.at(-1)?.status;
   const lastStepNeedsWork = lastStepStatus === 'incorrect' || lastStepStatus === 'unrecognised';
@@ -81,16 +83,22 @@ export function LearnerView({
               label="Write the equation after your next step"
               helper="Use brackets, + − × ÷ and =."
               {...input}
+              disabled={preview}
             />
           )}
           {(primaryAction || secondaryAction) && (
             <div className={styles.actions}>
               {primaryAction && (
-                <Button buttonRef={primaryRef} disabled={primaryAction.disabled} onClick={primaryAction.onClick}>
+                <Button
+                  buttonRef={primaryRef}
+                  disabled={preview || primaryAction.disabled}
+                  preview={preview}
+                  onClick={primaryAction.onClick}
+                >
                   {primaryAction.label}
                 </Button>
               )}
-              {secondaryAction && <HintAction {...secondaryAction} />}
+              {secondaryAction && <HintAction {...secondaryAction} disabled={preview} />}
             </div>
           )}
         </section>

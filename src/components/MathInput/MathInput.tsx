@@ -6,12 +6,13 @@ type Props = {
   value?: string;
   focused?: boolean;
   focusToken?: number;
+  disabled?: boolean;
   helper?: string;
   onChange?: (value: string) => void;
   onSubmit?: () => void;
 };
 
-export function MathInput({ label, value, focused, focusToken = 0, helper, onChange, onSubmit }: Props) {
+export function MathInput({ label, value, focused, focusToken = 0, disabled, helper, onChange, onSubmit }: Props) {
   const inputId = useId();
   const helperId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -33,12 +34,13 @@ export function MathInput({ label, value, focused, focusToken = 0, helper, onCha
       <label htmlFor={inputId} className={styles.label}>
         {label}
       </label>
-      <div className={styles.field}>
+      <div className={`${styles.field} ${disabled && focused ? styles.showFocus : ''}`}>
         <input
           ref={inputRef}
           id={inputId}
           className={styles.input}
           type="text"
+          disabled={disabled}
           {...valueProps}
           onKeyDown={handleKeyDown}
           placeholder="Type the equation"
