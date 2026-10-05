@@ -1,8 +1,9 @@
-import { useEffect, useId, useReducer, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useReducer, useRef, useState } from 'react';
 import type { ExplainSlotProps } from '../../components/ExplanationSurface/ExplanationSurface';
 import type { HelpSurfaceProps } from '../../components/HelpSurface/HelpSurface';
 import { buildExplanationRequest } from '../explanation/buildExplanationRequest';
-import { deterministicExplanationProvider } from '../explanation/deterministicExplanationProvider';
+import { defaultExplanationService } from '../explanation/defaultExplanationService';
+import { createExplanationService, type ResolutionMeta } from '../explanation/explanationResolver';
 import { explanationTargets, targetKey } from '../explanation/explanationTargets';
 import type { ExplanationProvider, ExplanationTarget } from '../explanation/explanationTypes';
 import { useExplanation } from '../explanation/useExplanation';
@@ -23,7 +24,12 @@ import { practiceQuestions } from './questions';
 import { sessionReducer, type SessionAction } from './sessionReducer';
 import { createInitialSession } from './sessionState';
 
-type Props = { showInspector?: boolean; explanationProvider?: ExplanationProvider };
+type Props = {
+  showInspector?: boolean;
+  // Tests and fixtures may supply providers; by default the service follows server configuration.
+  explanationProvider?: ExplanationProvider;
+  explanationFallback?: ExplanationProvider;
+};
 
 const forwardActionEvents: Record<ForwardAction, PracticeAction> = {
   'need-help': { type: 'HELP_REQUESTED' },
@@ -31,6 +37,16 @@ const forwardActionEvents: Record<ForwardAction, PracticeAction> = {
   'show-example': { type: 'EXAMPLE_REQUESTED' },
   'show-next-step': { type: 'NEXT_STEP_REQUESTED' },
 };
+
+const providerLabel = (id: string) => (id === 'llm' ? 'LLM' : id === 'deterministic' ? 'Deterministic' : id);
+
+const reasonLabels = { timeout: 'Timeout', network: 'Network', 'invalid-output': 'Invalid output', unavailable: 'Unavailable', error: 'Error' };
+
+function outcomeLabel(meta: ResolutionMeta): string {
+  const reason = meta.reason ? ` · ${reasonLabels[meta.reason]}` : '';
+  const names = { success: 'Success', 'deterministic-only': 'Deterministic only', fallback: 'Fallback', unavailable: 'Unavailable' };
+  return `${names[meta.outcome]}${reason}`;
+}
 
 const targetLabels: Record<ExplanationTarget['kind'], string> = {
   misconception: 'Misconception feedback',
@@ -40,7 +56,7 @@ const targetLabels: Record<ExplanationTarget['kind'], string> = {
   'accepted-step': 'Accepted step',
 };
 
-export function PracticeView({ showInspector, explanationProvider = deterministicExplanationProvider }: Props) {
+export function PracticeView({ showInspector, explanationProvider, explanationFallback }: Props) {
   const [session, dispatch] = useReducer(sessionReducer, undefined, createInitialSession);
   const [focusRequest, setFocusRequest] = useState(0);
   const { currentPractice: practice, currentQuestionIndex } = session;
@@ -51,7 +67,14 @@ export function PracticeView({ showInspector, explanationProvider = deterministi
   const launcherRef = useRef<HTMLButtonElement>(null);
   const surfaceId = useId();
   const explanationSurfaceId = useId();
-  const explanation = useExplanation(explanationProvider);
+  const explanationService = useMemo(
+    () =>
+      explanationProvider
+        ? createExplanationService({ primary: explanationProvider, fallback: explanationFallback })
+        : defaultExplanationService,
+    [explanationProvider, explanationFallback],
+  );
+  const explanation = useExplanation(explanationService);
 
   const act = (action: SessionAction, keepHelpOpen = false) => {
     dispatch(action);
@@ -115,14 +138,19 @@ export function PracticeView({ showInspector, explanationProvider = deterministi
       };
 
   const explainedTarget = explanation.state.target;
+  const meta = explanation.state.meta;
   const explanationInfo = {
     target: explainedTarget ? targetLabels[explainedTarget.kind] : 'None',
     status: explanation.state.status,
-    provider: explanationProvider.label,
+    attempted: meta ? providerLabel(meta.attempted) : '—',
+    used: meta?.used ? providerLabel(meta.used) : '—',
+    outcome: meta ? outcomeLabel(meta) : '—',
+    promptVersion: meta?.promptVersion ?? '—',
+    latencyMs: meta?.latencyMs,
   };
   const targets = explanationTargets(practice);
   const supported = (target?: ExplanationTarget) =>
-    target && explanationProvider.supports(buildExplanationRequest(target, question)) ? target : undefined;
+    target && explanationService.supports(buildExplanationRequest(target, question)) ? target : undefined;
 
   // Anything no longer on screen (progress, new question, a different hint) takes its explanation with it.
   const visibleKeys = Object.values(targets).map(targetKey);

@@ -23,7 +23,16 @@ export type AssistanceState = {
   repeatedDifficulty: number;
 };
 
-export type ExplanationInfo = { target: string; status: string; provider: string; requests: number };
+export type ExplanationInfo = {
+  target: string;
+  status: string;
+  attempted: string;
+  used: string;
+  outcome: string;
+  promptVersion: string;
+  latencyMs?: number;
+  requests: number;
+};
 
 export type LearningState = {
   concept: string;

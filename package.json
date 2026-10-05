@@ -9,7 +9,10 @@
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "eval:explanations": "node scripts/evalExplanations.mjs",
+    "eval:explanations:llm": "node scripts/evalExplanations.mjs --llm",
+    "mock:llm": "node scripts/mockLlmServer.mjs"
   },
   "dependencies": {
     "react": "^19.3.0",

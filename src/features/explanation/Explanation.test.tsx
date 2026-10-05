@@ -1,6 +1,8 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { PracticeView } from '../practice/PracticeView';
+import { deterministicExplanationProvider } from './deterministicExplanationProvider';
+import { createLlmExplanationProvider } from './llmExplanationProvider';
 import type { ExplanationProvider } from './explanationTypes';
 
 const mistake = '3x + 2 = 18';
@@ -308,5 +310,101 @@ describe('explanation accessibility', () => {
     await openHelpFor('Get a hint');
     expect(region()!.compareDocumentPosition(input()) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getByRole('region', { name: 'Hint' }).contains(region())).toBe(false);
+  });
+});
+
+describe('model-backed provider with deterministic fallback', () => {
+  const llmGood = { version: 'explanation-output/1', title: 'Remote title', body: 'Remote body: both sides change in the same way.' };
+  const withModel = (fetchImpl: typeof fetch) => ({
+    explanationProvider: createLlmExplanationProvider({ fetchImpl }),
+    explanationFallback: deterministicExplanationProvider,
+  });
+  const envelope = (value: unknown) =>
+    (async () => new Response(JSON.stringify({ status: 'ok', promptVersion: 'explanation-prompt/1', requestId: 'r1', value }))) as unknown as typeof fetch;
+  const setupModel = (fetchImpl: typeof fetch) => {
+    const { explanationProvider, explanationFallback } = withModel(fetchImpl);
+    const user = userEvent.setup();
+    render(<PracticeView showInspector explanationProvider={explanationProvider} explanationFallback={explanationFallback} />);
+    const submit = async (text: string) => {
+      await user.type(screen.getByRole('textbox', { name: 'Write the equation after your next step' }), text);
+      await user.click(screen.getByRole('button', { name: 'Check step' }));
+    };
+    return { user, submit, explain: () => user.click(screen.getByRole('button', { name: 'Explain this' })) };
+  };
+
+  it('shows the model explanation and records provider diagnostics only in the inspector', async () => {
+    const { submit, explain } = setupModel(envelope(llmGood));
+    await submit('x + 2 = 6');
+    await explain();
+    await waitFor(() => expect(region()).toHaveTextContent('Remote body'));
+    expect(value('Provider attempted')).toHaveTextContent('LLM');
+    expect(value('Provider used')).toHaveTextContent('LLM');
+    expect(value('Outcome')).toHaveTextContent('Success');
+    expect(value('Prompt version')).toHaveTextContent('explanation-prompt/1');
+    expect(value('Latency')).toHaveTextContent(/\d+ ms/);
+    expect(within(screen.getByRole('main')).queryByText(/\b(LLM|model|fallback|timeout)\b/i)).toBeNull();
+  });
+
+  it.each([
+    ['a network error', (async () => { throw new TypeError('offline'); }) as unknown as typeof fetch, 'Fallback · Network'],
+    ['a timeout', (async () => new Response(JSON.stringify({ status: 'error', reason: 'timeout' }), { status: 504 })) as unknown as typeof fetch, 'Fallback · Timeout'],
+    ['invalid output', envelope({ ...llmGood, isCorrect: true }), 'Fallback · Invalid output'],
+    ['malformed output', (async () => new Response('<html>')) as unknown as typeof fetch, 'Fallback · Invalid output'],
+  ])('shows the deterministic explanation after %s, without any technical detail', async (_name, fetchImpl, outcome) => {
+    const { submit, explain } = setupModel(fetchImpl);
+    await submit('x + 2 = 6');
+    await explain();
+    await waitFor(() => expect(region()).toHaveTextContent('Dividing both sides by 3 keeps the equation balanced'));
+    expect(region()).not.toHaveTextContent(/LLM|timeout|network|error|fallback/i);
+    expect(value('Provider attempted')).toHaveTextContent('LLM');
+    expect(value('Provider used')).toHaveTextContent('Deterministic');
+    expect(value('Outcome')).toHaveTextContent(outcome);
+    expect(value('Status')).toHaveTextContent('ready');
+  });
+
+  it('counts the learner request once and leaves mastery alone, whether the model or the fallback answered', async () => {
+    const { submit, explain } = setupModel((async () => { throw new TypeError('offline'); }) as unknown as typeof fetch);
+    await submit('x + 2 = 6');
+    const mastery = value('Mastery estimate')?.textContent;
+    await explain();
+    await waitFor(() => expect(region()).toBeInTheDocument());
+    expect(value('Explanations requested')).toHaveTextContent('1');
+    expect(value('Mastery estimate')?.textContent).toBe(mastery);
+  });
+
+  it('shows the safe message when the model fails and the fallback has no mapping', async () => {
+    const unmapped = { ...deterministicExplanationProvider, supports: () => true, explain: async () => ({ status: 'unavailable' as const }) };
+    const user = userEvent.setup();
+    render(
+      <PracticeView
+        showInspector
+        explanationProvider={createLlmExplanationProvider({ fetchImpl: (async () => { throw new TypeError('offline'); }) as unknown as typeof fetch })}
+        explanationFallback={unmapped}
+      />,
+    );
+    await user.type(screen.getByRole('textbox', { name: 'Write the equation after your next step' }), 'x + 2 = 6');
+    await user.click(screen.getByRole('button', { name: 'Check step' }));
+    await user.click(screen.getByRole('button', { name: 'Explain this' }));
+    await waitFor(() => expect(region()).toHaveTextContent(safeFallback));
+    expect(value('Outcome')).toHaveTextContent('Unavailable');
+  });
+
+  it('does not send a second request while the same explanation is loading, and ignores a stale answer', async () => {
+    let calls = 0;
+    let release: () => void = () => undefined;
+    const slow = (async () => {
+      calls += 1;
+      await new Promise<void>((resolve) => (release = resolve));
+      return new Response(JSON.stringify({ status: 'ok', value: llmGood }));
+    }) as unknown as typeof fetch;
+    const { submit, explain, user } = setupModel(slow);
+    await submit('x + 2 = 6');
+    await explain();
+    expect(region()).toHaveTextContent('Explaining…');
+    await user.click(screen.getByRole('button', { name: 'Close explanation' }));
+    release();
+    await Promise.resolve();
+    expect(region()).not.toBeInTheDocument();
+    expect(calls).toBe(1);
   });
 });

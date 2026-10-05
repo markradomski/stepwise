@@ -21,6 +21,7 @@ The learner UI follows the Figma prototype. The default route is a real three-qu
 - truthful question progress (Question 1 of 3, 2 of 3, 3 of 3), a dedicated "Question complete" state that replaces the input with a Next question action (the solved working stays visible), and a final Practice complete state
 - contextual help: a single quiet launcher beside Check step opens one compact, embedded help surface that shows only the support currently relevant (prompt, hint or example), one forward action and, at most, one way back to earlier help. Support is deterministic and progressively exposed: it follows the learner's own actions and diagnosed difficulty, never time, and generic help can never escalate to the answer. Repeated difficulty changes which help is available next without auto-revealing it, and reviewing or closing help never counts as new help
 - optional explanation layer: an "Explain this" action beside feedback, a hint, an accepted step or a suggested step opens a small inline explanation of why it makes sense. It elaborates on deterministic feedback and working without controlling correctness or progression: correctness and misconception detection stay deterministic. Explanations come from a provider interface that receives a narrow structured request and returns display-only text that is validated before rendering; the only provider today is local and deterministic, and no external service is called
+- model-backed explanations (optional): the explanation provider can be switched to a language model on the server. Correctness, diagnosis and progression stay deterministic; the model only receives a narrow structured explanation request, its output is untrusted and validated before display, and the deterministic explanations remain the fallback. API keys stay server-side and the app works without any configuration. See [docs/EXPLANATION_MODEL_BOUNDARY.md](docs/EXPLANATION_MODEL_BOUNDARY.md)
 - one continuous working sequence: the given line, the learner's accepted steps and any system-suggested step read as a single piece of reasoning, while authorship (a labelled suggested step) and uncertainty (a recognised misconception versus an unrecognised attempt) stay visibly distinct
 - per-question content: each question defines its own generic prompts, hints, worked examples and misconception feedback
 - session-level learning state kept apart from the question on screen
@@ -57,3 +58,21 @@ npm run dev
 - `npm run build` type-checks and builds for production
 - `npm test` runs the test suite
 - `npm run typecheck` runs TypeScript without building
+
+## Optional model configuration
+
+Without configuration the deterministic provider is used.
+
+```bash
+cp .env.example .env
+# set EXPLANATION_PROVIDER=llm and LLM_API_KEY=... (server-only; never prefix with VITE_)
+npm run dev
+```
+
+Evaluate explanations (the live run uses the API and is opt-in):
+
+```bash
+npm run eval:explanations        # deterministic, offline
+npm run eval:explanations:llm    # also evaluates the configured model
+npm run mock:llm                 # local stand-in for the model API, to try fallbacks without a key
+```

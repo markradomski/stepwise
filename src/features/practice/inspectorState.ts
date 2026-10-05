@@ -65,7 +65,7 @@ export function learningStateFromPractice(state: PracticeState): LearningState {
   };
 }
 
-export type ExplanationSnapshot = { target: string; status: string; provider: string };
+export type ExplanationSnapshot = Omit<NonNullable<LearningState['explanation']>, 'requests'>;
 
 export function learningStateFromSession(session: PracticeSessionState, explanation?: ExplanationSnapshot): LearningState {
   const summary = summariseSession(session);

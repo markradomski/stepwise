@@ -54,7 +54,13 @@ export function Inspector({ state }: Props) {
           <dl>
             <LearningStateRow label="Target" value={state.explanation.target} />
             <LearningStateRow label="Status" value={state.explanation.status} />
-            <LearningStateRow label="Provider" value={state.explanation.provider} />
+            <LearningStateRow label="Provider attempted" value={state.explanation.attempted} />
+            <LearningStateRow label="Provider used" value={state.explanation.used} />
+            <LearningStateRow label="Outcome" value={state.explanation.outcome} />
+            <LearningStateRow label="Prompt version" value={state.explanation.promptVersion} />
+            {state.explanation.latencyMs !== undefined && (
+              <LearningStateRow label="Latency" value={`${state.explanation.latencyMs} ms`} />
+            )}
             <LearningStateRow label="Explanations requested" value={String(state.explanation.requests)} />
           </dl>
         </section>
