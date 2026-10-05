@@ -16,7 +16,8 @@
   --shape: var(--color-info);
 }
 
-.note {
+.note,
+.start {
   --glyph: var(--color-text-muted);
 }
 
@@ -24,7 +25,8 @@
   fill: var(--shape);
 }
 
-.note .shape {
+.note .shape,
+.start .shape {
   stroke: var(--glyph);
   stroke-width: 2;
 }

@@ -1,6 +1,6 @@
 import styles from './StatusIcon.module.css';
 
-export type StatusIconKind = 'check' | 'attention' | 'hint' | 'note';
+export type StatusIconKind = 'check' | 'attention' | 'hint' | 'note' | 'start';
 
 type Props = { kind: StatusIconKind; size?: number };
 
@@ -17,7 +17,7 @@ export function StatusIcon({ kind, size = 24 }: Props) {
       {kind === 'attention' ? (
         <rect className={styles.shape} width="24" height="24" rx="6" />
       ) : (
-        <circle className={styles.shape} cx="12" cy="12" r={kind === 'note' ? 11 : 12} />
+        <circle className={styles.shape} cx="12" cy="12" r={kind === 'note' || kind === 'start' ? 11 : 12} />
       )}
       {kind === 'check' && <path className={styles.stroke} d="M7 12.5l3.5 3.5L17 8.5" />}
       {kind === 'attention' && (
@@ -32,6 +32,7 @@ export function StatusIcon({ kind, size = 24 }: Props) {
           <circle className={styles.dot} cx="12" cy="17.6" r="1.4" />
         </>
       )}
+      {kind === 'start' && <circle className={styles.dot} cx="12" cy="12" r="4" />}
       {kind === 'note' && (
         <>
           <path className={styles.stroke} d="M12 11v6" />

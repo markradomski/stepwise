@@ -5,7 +5,7 @@
 }
 
 .label {
-  font: var(--font-label);
+  font: var(--font-body-strong);
 }
 
 .field {
@@ -21,16 +21,6 @@
 .field:focus-within {
   outline: 3px solid var(--color-focus);
   outline-offset: 2px;
-}
-
-.stepNumber {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 4rem;
-  background: var(--color-surface-sunken);
-  color: var(--color-text-muted);
-  font: var(--font-label);
 }
 
 .input {

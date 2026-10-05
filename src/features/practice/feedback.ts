@@ -27,7 +27,11 @@ export function feedbackForResult(result: ValidationResult, state: PracticeState
   }
 
   if (result.kind === 'valid') {
-    if (result.progression === 'direct') return undefined;
+    if (result.progression === 'direct') {
+      return result.simplification
+        ? { kind: 'success', title: 'That step works.', message: `Can you simplify ${result.simplification.expression}?` }
+        : undefined;
+    }
     return {
       kind: 'neutral',
       message:

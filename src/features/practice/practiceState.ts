@@ -1,4 +1,5 @@
 import { practiceQuestion } from './practiceQuestion';
+import type { Simplification } from './equivalence';
 import type { Misconception, ValidationResult } from './validation';
 
 export type StepSource = 'learner' | 'system';
@@ -8,6 +9,7 @@ export type PracticeStep = {
   canonicalExpression: string;
   status: 'accepted';
   source: StepSource;
+  simplification?: Simplification;
 };
 
 // Fallback help is deliberately not a misconception: an unrecognised step carries no diagnosis.

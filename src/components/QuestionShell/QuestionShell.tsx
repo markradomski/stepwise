@@ -1,10 +1,9 @@
-import { MathExpression } from '../MathExpression/MathExpression';
 import { Progress } from '../Progress/Progress';
 import styles from './QuestionShell.module.css';
 
 type Props = {
   progress: { current: number; total: number; complete?: boolean };
-  question: { instruction: string; expression: string };
+  question: { instruction: string };
 };
 
 export function QuestionShell({ progress, question }: Props) {
@@ -26,7 +25,6 @@ export function QuestionShell({ progress, question }: Props) {
           Question {progress.current}
         </h2>
         <p>{question.instruction}</p>
-        <MathExpression expression={question.expression} size="display" />
       </section>
     </div>
   );

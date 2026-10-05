@@ -1,6 +1,6 @@
 import styles from './MathExpression.module.css';
 
-type Props = { expression: string; size: 'display' | 'step' | 'small' };
+type Props = { expression: string; size: 'display' | 'large' | 'step' | 'small' };
 
 export function MathExpression({ expression, size }: Props) {
   return (

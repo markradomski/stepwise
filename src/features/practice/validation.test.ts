@@ -99,6 +99,7 @@ describe('validateStep', () => {
       recognition: 'equivalent',
       submittedExpression: '(x + 2) = 18/3',
       canonicalExpression: 'x + 2 = 6',
+      simplification: { expression: '18/3', result: '6' },
     });
     expect(check(initial, 'x+2=18/3')).toMatchObject({
       recognition: 'equivalent',
@@ -128,5 +129,46 @@ describe('validateStep', () => {
   it('does not accept a different equation just because its arithmetic reduces', () => {
     expect(check(initial, 'x + 2 = 18/2').kind).toBe('unrecognised');
     expect(check(initial, '3(x + 2) = 6').kind).toBe('unrecognised');
+  });
+
+  it.each([
+    ['x + 2 = 18/3', '18/3', '6'],
+    ['3x = 12/1', '12/1', '12'],
+    ['x = 12/3', '12/3', '4'],
+    ['3x = 6*2', '6*2', '12'],
+    ['3x = 18 - 6', '18 - 6', '12'],
+  ])('flags a reducible numeric side in %s', (input, expression, result) => {
+    const from = input.startsWith('x + 2') ? initial : input.startsWith('x =') ? '3x = 12' : '3x + 6 = 18';
+    expect(check(from, input)).toMatchObject({ kind: 'valid', simplification: { expression, result } });
+  });
+
+  it('does not flag already simplified or symbolic expressions', () => {
+    for (const [from, input] of [
+      [initial, 'x + 2 = 6'],
+      [initial, '3x + 6 = 18'],
+      ['3x = 12', 'x = 4'],
+      [initial, '(x + 2) = 6'],
+      [initial, '(x + 2) = (6)'],
+    ]) {
+      expect(check(from, input)).not.toHaveProperty('simplification');
+    }
+  });
+
+  it('does not let simplification change the canonical progression', () => {
+    const withGuidance = check(initial, 'x + 2 = 18/3');
+    const without = check(initial, 'x + 2 = 6');
+    expect(withGuidance).toMatchObject({ canonicalExpression: 'x + 2 = 6', progression: 'direct' });
+    expect(withGuidance).toMatchObject({ canonicalExpression: (without as { canonicalExpression: string }).canonicalExpression });
+    expect(withGuidance).toHaveProperty('submittedExpression', 'x + 2 = 18/3');
+  });
+
+  it('accepts the simplified restatement only while a simplification is pending', () => {
+    const restate = (pending: boolean) =>
+      validateStep(practiceQuestion, 'x + 2 = 6', 'x + 2 = 6', { simplificationPending: pending });
+    expect(restate(true)).toMatchObject({ kind: 'valid', progression: 'direct', canonicalExpression: 'x + 2 = 6' });
+    expect(restate(false).kind).toBe('unrecognised');
+    expect(
+      validateStep(practiceQuestion, 'x + 2 = 6', 'x + 2 = 12/2', { simplificationPending: true }),
+    ).toMatchObject({ kind: 'unrecognised' });
   });
 });

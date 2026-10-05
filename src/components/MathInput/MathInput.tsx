@@ -3,7 +3,6 @@ import styles from './MathInput.module.css';
 
 type Props = {
   label: string;
-  stepNumber: number;
   value?: string;
   focused?: boolean;
   focusToken?: number;
@@ -12,7 +11,7 @@ type Props = {
   onSubmit?: () => void;
 };
 
-export function MathInput({ label, stepNumber, value, focused, focusToken = 0, helper, onChange, onSubmit }: Props) {
+export function MathInput({ label, value, focused, focusToken = 0, helper, onChange, onSubmit }: Props) {
   const inputId = useId();
   const helperId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -35,9 +34,6 @@ export function MathInput({ label, stepNumber, value, focused, focusToken = 0, h
         {label}
       </label>
       <div className={styles.field}>
-        <span className={styles.stepNumber} aria-hidden="true">
-          {stepNumber}
-        </span>
         <input
           ref={inputRef}
           id={inputId}
@@ -45,7 +41,7 @@ export function MathInput({ label, stepNumber, value, focused, focusToken = 0, h
           type="text"
           {...valueProps}
           onKeyDown={handleKeyDown}
-          placeholder="Type your step"
+          placeholder="Type the equation"
           autoComplete="off"
           autoCapitalize="off"
           spellCheck={false}

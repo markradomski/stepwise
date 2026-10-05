@@ -48,7 +48,7 @@ export function PracticeView({ showInspector }: Props) {
   const primaryAction = state.completed
     ? { label: 'Restart question', onClick: () => act({ type: 'RESET_QUESTION' }), focusKey: focusRequest }
     : {
-        label: showingRejection ? 'Try again' : 'Check',
+        label: 'Check step',
         disabled: state.currentInput.trim() === '',
         onClick: () => act({ type: 'STEP_SUBMITTED' }),
       };

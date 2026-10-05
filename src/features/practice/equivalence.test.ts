@@ -1,4 +1,4 @@
-import { canonicaliseEquation } from './equivalence';
+import { canonicaliseEquation, findSimplification } from './equivalence';
 import { normaliseExpression } from './normalise';
 
 const canonical = (input: string) => canonicaliseEquation(normaliseExpression(input));
@@ -43,5 +43,32 @@ describe('canonicaliseEquation', () => {
     expect(canonical('banana')).toBe('banana');
     expect(canonical('x = 1 = 2')).toBe('x = 1 = 2');
     expect(canonical('')).toBe('');
+  });
+});
+
+describe('findSimplification', () => {
+  const find = (input: string) => findSimplification(normaliseExpression(input));
+
+  it('finds a reducible numeric-only side', () => {
+    expect(find('x + 2 = 18/3')).toEqual({ expression: '18/3', result: '6' });
+    expect(find('x = 12/3')).toEqual({ expression: '12/3', result: '4' });
+    expect(find('3x = 6*2')).toEqual({ expression: '6*2', result: '12' });
+    expect(find('3x = 18-6')).toEqual({ expression: '18 - 6', result: '12' });
+    expect(find('(x + 2) = (18/3)')).toEqual({ expression: '18/3', result: '6' });
+  });
+
+  it('finds nothing when the numbers are already simplified', () => {
+    for (const input of ['x + 2 = 6', 'x = 4', '3x + 6 = 18', '(x + 2) = (6)', 'x = -4']) {
+      expect(find(input)).toBeUndefined();
+    }
+  });
+
+  it('never evaluates sides that contain the variable', () => {
+    expect(find('3x = 12')).toBeUndefined();
+    expect(find('x + 2*3 = 18')).toBeUndefined();
+  });
+
+  it('ignores unsafe arithmetic', () => {
+    expect(find('x = 12/0')).toBeUndefined();
   });
 });

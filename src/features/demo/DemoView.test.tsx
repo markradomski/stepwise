@@ -12,7 +12,7 @@ describe('untouched question', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Stepwise' })).toBeInTheDocument();
     expect(screen.getByText('Round 2 of 3')).toBeInTheDocument();
     expect(screen.getByRole('math', { name: '3(x + 2) = 18' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Check' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Check step' })).toBeInTheDocument();
     expect(screen.getByRole('status')).toBeEmptyDOMElement();
     expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
   });
@@ -23,7 +23,7 @@ describe('valid step accepted', () => {
     renderState('02');
     expect(screen.getByRole('math', { name: '3x + 6 = 18' })).toBeInTheDocument();
     expect(screen.getByText('Step accepted')).toBeInTheDocument();
-    expect(screen.getByLabelText('Your next step')).toHaveValue('');
+    expect(screen.getByLabelText('Write the equation after your next step')).toHaveValue('');
   });
 });
 
@@ -33,7 +33,7 @@ describe('first incorrect attempt', () => {
     expect(screen.getByRole('math', { name: '3x + 2 = 18' })).toBeInTheDocument();
     expect(screen.getByText('Needs attention')).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent('Check what the 3 multiplies inside the brackets.');
-    expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Check step' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Need a hint?' })).toBeInTheDocument();
     expect(screen.queryByText(/partial distribution|misconception|mastery/i)).not.toBeInTheDocument();
   });
@@ -87,12 +87,12 @@ describe('completed question', () => {
 describe('accessibility', () => {
   it('labels the maths input', () => {
     renderState('01');
-    expect(screen.getByRole('textbox', { name: 'Your next step' })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Write the equation after your next step' })).toBeInTheDocument();
   });
 
   it('makes actions keyboard focusable', () => {
     renderState('03');
-    for (const name of ['Try again', 'Need a hint?']) {
+    for (const name of ['Check step', 'Need a hint?']) {
       const button = screen.getByRole('button', { name });
       button.focus();
       expect(button).toHaveFocus();
@@ -101,12 +101,12 @@ describe('accessibility', () => {
 
   it('moves focus to the next input when a step has just been accepted', () => {
     renderState('02');
-    expect(screen.getByLabelText('Your next step')).toHaveFocus();
+    expect(screen.getByLabelText('Write the equation after your next step')).toHaveFocus();
   });
 
   it('states step status in text, not colour alone', () => {
     renderState('03');
-    const step = screen.getByRole('listitem');
+    const step = screen.getByText('Needs attention').closest('li')!;
     expect(within(step).getByText('Needs attention')).toBeVisible();
     expect(step.querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
   });

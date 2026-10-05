@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Button } from '../../components/Button/Button';
 import { FeedbackMessage, type FeedbackKind } from '../../components/FeedbackMessage/FeedbackMessage';
 import { HintAction } from '../../components/HintAction/HintAction';
+import { InteractionGuide } from '../../components/InteractionGuide/InteractionGuide';
 import { Inspector } from '../../components/Inspector/Inspector';
 import { MathInput } from '../../components/MathInput/MathInput';
 import { QuestionShell } from '../../components/QuestionShell/QuestionShell';
@@ -43,6 +44,9 @@ export function LearnerView({
 }: LearnerViewProps) {
   const lastStepStatus = workingSteps.at(-1)?.status;
   const lastStepNeedsWork = lastStepStatus === 'incorrect' || lastStepStatus === 'unrecognised';
+  const lines: LearnerViewProps['workingSteps'] = [{ expression: question.expression, status: 'given' }, ...workingSteps];
+  const latestLine = lines.map((line) => line.status === 'given' || line.status === 'accepted').lastIndexOf(true);
+  const hasAcceptedWork = workingSteps.some((step) => step.status === 'accepted');
   const primaryRef = useRef<HTMLButtonElement>(null);
   const primaryFocusKey = primaryAction?.focusKey ?? 0;
 
@@ -57,17 +61,16 @@ export function LearnerView({
     <div className={`${styles.stage} ${inspector ? styles.withInspector : ''}`}>
       <main className={styles.column}>
         <QuestionShell progress={progress} question={question} />
+        <InteractionGuide open={!hasAcceptedWork} />
         <section className={styles.working} aria-labelledby="working-heading">
           <h2 id="working-heading" className="overline">
             Your working
           </h2>
-          {workingSteps.length > 0 && (
-            <ol className={styles.steps} aria-label="Working so far">
-              {workingSteps.map((step, index) => (
-                <WorkingStep key={index} {...step} />
-              ))}
-            </ol>
-          )}
+          <ol className={styles.steps} aria-label="Working so far">
+            {lines.map((line, index) => (
+              <WorkingStep key={index} {...line} latest={index === latestLine} />
+            ))}
+          </ol>
           <div role="status" className={`${styles.feedbackSlot} ${lastStepNeedsWork ? styles.attached : ''}`}>
             {feedback && <FeedbackMessage {...feedback} />}
             {hint && <FeedbackMessage kind="hint" title="Hint" message={hint} />}
@@ -75,8 +78,7 @@ export function LearnerView({
           </div>
           {input && (
             <MathInput
-              label="Your next step"
-              stepNumber={workingSteps.filter((step) => step.status === 'accepted').length + 1}
+              label="Write the equation after your next step"
               helper="Use brackets, + − × ÷ and =."
               {...input}
             />

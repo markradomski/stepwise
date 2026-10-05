@@ -236,12 +236,13 @@ describe('equivalent forms', () => {
         canonicalExpression: 'x + 2 = 6',
         status: 'accepted',
         source: 'learner',
+        simplification: { expression: '18/3', result: '6' },
       },
     ]);
     expect(state.misconceptionCounts).toEqual({});
     expect(state.helpSource).toBeUndefined();
     expect(state.rejectedExpression).toBeUndefined();
-    expect(feedbackForState(state)).toBeUndefined();
+    expect(feedbackForState(state)?.kind).toBe('success');
     expect(submit(state, 'x = 4').completed).toBe(true);
   });
 
@@ -256,6 +257,54 @@ describe('equivalent forms', () => {
     expect(state.completed).toBe(false);
     expect(state.steps).toHaveLength(0);
     expect(feedbackForState(state)?.message).toBe('That answer is correct. Can you show one step that gets you there?');
+  });
+});
+
+describe('simplification guidance', () => {
+  it('asks the learner to simplify without changing the canonical state', () => {
+    const state = run('x + 2 = 18/3');
+    expect(state.steps[0]).toMatchObject({
+      expression: 'x + 2 = 18/3',
+      canonicalExpression: 'x + 2 = 6',
+      simplification: { expression: '18/3', result: '6' },
+    });
+    expect(feedbackForState(state)).toEqual({
+      kind: 'success',
+      title: 'That step works.',
+      message: 'Can you simplify 18/3?',
+    });
+    expect(state.misconceptionCounts).toEqual({});
+    expect(learningStateFromPractice(state)).toMatchObject({ simplification: 'Available', recognition: 'Equivalent form' });
+  });
+
+  it('accepts the simplified line as the next step and then carries on', () => {
+    const state = run('x + 2 = 18/3', 'x + 2 = 6');
+    expect(state.steps.map((step) => step.expression)).toEqual(['x + 2 = 18/3', 'x + 2 = 6']);
+    expect(state.steps.map((step) => step.canonicalExpression)).toEqual(['x + 2 = 6', 'x + 2 = 6']);
+    expect(feedbackForState(state)).toBeUndefined();
+    expect(learningStateFromPractice(state).simplification).toBeUndefined();
+    expect(run('x + 2 = 18/3', 'x + 2 = 6', 'x = 4').completed).toBe(true);
+  });
+
+  it('does not accept a repeat of the same equation when nothing was left to simplify', () => {
+    const state = run('3x + 6 = 18', '3x + 6 = 18');
+    expect(state.steps).toHaveLength(1);
+    expect(state.lastResult?.kind).toBe('unrecognised');
+  });
+
+  it('lets the learner move straight on instead of simplifying', () => {
+    expect(run('x + 2 = 18/3', 'x = 4').completed).toBe(true);
+  });
+
+  it('does not hold back completion for an unsimplified final answer', () => {
+    const state = run('3x + 6 = 18', '3x = 12', 'x = 12/3');
+    expect(state.completed).toBe(true);
+    expect(feedbackForState(state)?.kind).toBe('success');
+    expect(feedbackForState(state)?.title).toBe('Solved');
+  });
+
+  it('guides a simplification of a subtraction too', () => {
+    expect(feedbackForState(run('3x + 6 = 18', '3x = 18 - 6'))?.message).toBe('Can you simplify 18 - 6?');
   });
 });
 

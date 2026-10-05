@@ -18,7 +18,7 @@ export type DemoState = {
 
 const baseState = {
   progress: { current: 2, total: 3 },
-  question: { instruction: 'Solve the equation.', expression: '3(x + 2) = 18' },
+  question: { instruction: 'Solve the equation one step at a time.', expression: '3(x + 2) = 18' },
 };
 
 const partialDistributionState: DemoState = {
@@ -31,7 +31,8 @@ const partialDistributionState: DemoState = {
     title: 'Have another look',
     message: 'Remember: the number outside the brackets multiplies every term inside.',
   },
-  primaryAction: { label: 'Try again' },
+  input: { value: '3x + 2 = 18', state: 'empty' },
+  primaryAction: { label: 'Check step' },
   secondaryAction: { label: 'Show an example', emphasis: 'prominent' },
 };
 
@@ -42,7 +43,7 @@ export const demoStates: DemoState[] = [
     title: 'Untouched question',
     workingSteps: [],
     input: { value: '', state: 'empty' },
-    primaryAction: { label: 'Check' },
+    primaryAction: { label: 'Check step' },
   },
   {
     ...baseState,
@@ -50,7 +51,7 @@ export const demoStates: DemoState[] = [
     title: 'Valid step accepted',
     workingSteps: [{ expression: '3x + 6 = 18', status: 'accepted' }],
     input: { value: '', state: 'focused' },
-    primaryAction: { label: 'Check' },
+    primaryAction: { label: 'Check step' },
   },
   {
     ...baseState,
@@ -62,7 +63,8 @@ export const demoStates: DemoState[] = [
       title: 'Have another look',
       message: 'Check what the 3 multiplies inside the brackets.',
     },
-    primaryAction: { label: 'Try again' },
+    input: { value: '3x + 2 = 18', state: 'empty' },
+    primaryAction: { label: 'Check step' },
     secondaryAction: { label: 'Need a hint?', emphasis: 'quiet' },
   },
   partialDistributionState,

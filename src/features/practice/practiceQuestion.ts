@@ -13,7 +13,7 @@ export type PracticeQuestion = {
 // current one through these transitions counts as valid, so steps may be skipped.
 export const practiceQuestion: PracticeQuestion = {
   id: 'linear-3-bracket',
-  instruction: 'Solve the equation.',
+  instruction: 'Solve the equation one step at a time.',
   initialExpression: '3(x + 2) = 18',
   goal: 'x = 4',
   transitions: {

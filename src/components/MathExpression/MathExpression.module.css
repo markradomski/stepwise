@@ -7,6 +7,10 @@
   font: var(--font-math-display);
 }
 
+.large {
+  font: var(--font-math-large);
+}
+
 .small {
   font: var(--font-math-small);
 }
@@ -18,5 +22,10 @@
 @media (max-width: 40rem) {
   .display {
     font: var(--font-math-large);
+  }
+
+  .large {
+    font-size: 2rem;
+    line-height: 2.5rem;
   }
 }

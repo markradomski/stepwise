@@ -5,11 +5,11 @@ import { PracticeView } from './PracticeView';
 const setup = (showInspector = false) => {
   const user = userEvent.setup();
   render(<PracticeView showInspector={showInspector} />);
-  const input = () => screen.getByRole('textbox', { name: 'Your next step' });
+  const input = () => screen.getByRole('textbox', { name: 'Write the equation after your next step' });
   const submit = async (value: string) => {
     await user.clear(input());
     await user.type(input(), value);
-    await user.click(screen.getByRole('button', { name: /^(Check|Try again)$/ }));
+    await user.click(screen.getByRole('button', { name: 'Check step' }));
   };
   const press = (name: string) => user.click(screen.getByRole('button', { name }));
   return { user, input, submit, press };
@@ -19,10 +19,139 @@ const mistake = '3x + 2 = 18';
 const learnerColumn = () => within(screen.getByRole('main'));
 const status = () => screen.getByRole('status');
 
+describe('interaction contract', () => {
+  it('tells a first-time learner exactly what to write', () => {
+    const { input } = setup();
+    expect(screen.getByText('Solve the equation one step at a time.')).toBeInTheDocument();
+    expect(screen.getByLabelText('Write the equation after your next step')).toBe(input());
+    expect(screen.getByRole('button', { name: 'Check step' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Check$/ })).not.toBeInTheDocument();
+    expect(screen.queryByText('Your next step')).not.toBeInTheDocument();
+  });
+
+  it('shows the given equation as the first line of the working sequence', () => {
+    setup();
+    const working = screen.getByRole('region', { name: 'Your working' });
+    const lines = within(within(working).getByRole('list', { name: 'Working so far' })).getAllByRole('listitem');
+    expect(lines).toHaveLength(1);
+    expect(within(lines[0]).getByRole('math', { name: '3(x + 2) = 18' })).toBeInTheDocument();
+    expect(within(lines[0]).getByText('Given')).toBeInTheDocument();
+    expect(within(working).getByRole('textbox')).toBeInTheDocument();
+    expect(screen.getAllByRole('math', { name: '3(x + 2) = 18' })).toHaveLength(1);
+  });
+
+  it('has no line-number gutter beside the input', () => {
+    const { input } = setup();
+    expect(input().parentElement?.children).toHaveLength(1);
+    expect(screen.queryByText(/^\d+$/)).not.toBeInTheDocument();
+  });
+
+  it('explains the input convention on first load, separately from the maths help', () => {
+    setup();
+    const guide = screen.getByText('How Stepwise works').closest('details')!;
+    expect(guide).toHaveAttribute('open');
+    const text = within(guide);
+    expect(text.getByText(/one line of working at a time/i)).toBeInTheDocument();
+    expect(text.getByText(/the equation as it looks after one operation/i)).toBeInTheDocument();
+    expect(text.getByRole("math", { name: "2x + 4 = 10" })).toBeInTheDocument();
+    expect(text.getByRole('math', { name: '2x = 6' })).toBeInTheDocument();
+    expect(text.getByText('Write the equation, not the operation.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /hint/i })).not.toBeInTheDocument();
+  });
+
+  it('tucks the explanation away once the learner has accepted working', async () => {
+    const { submit } = setup();
+    await submit('3x + 6 = 18');
+    expect(screen.getByText('How Stepwise works').closest('details')).not.toHaveAttribute('open');
+  });
+
+  it('keeps the explanation open while the learner is still getting a first step right', async () => {
+    const { submit } = setup();
+    await submit('banana');
+    expect(screen.getByText('How Stepwise works').closest('details')).toHaveAttribute('open');
+  });
+});
+
+describe('guided simplification', () => {
+  it('accepts an unsimplified step, keeps it visible, and asks the learner to simplify it', async () => {
+    const { input, submit } = setup();
+    await submit('x + 2 = 18/3');
+
+    const working = within(screen.getByRole('list', { name: 'Working so far' }));
+    expect(working.getByRole('math', { name: 'x + 2 = 18/3' })).toBeInTheDocument();
+    expect(working.getByText('Step accepted')).toBeInTheDocument();
+    expect(status()).toHaveTextContent('That step works.');
+    expect(status()).toHaveTextContent('Can you simplify 18/3?');
+    expect(screen.queryByText(/needs attention|not recognised|have another look/i)).not.toBeInTheDocument();
+    expect(learnerColumn().queryByText(/equivalent|canonical|simplificationAvailable/i)).toBeNull();
+    expect(input()).toHaveValue('');
+    expect(input()).toHaveFocus();
+  });
+
+  it('places the next input directly after the accepted line', async () => {
+    const { input, submit } = setup();
+    await submit('x + 2 = 18/3');
+    const list = screen.getByRole('list', { name: 'Working so far' });
+    expect(list.compareDocumentPosition(input()) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const lastLine = within(list).getAllByRole('listitem').at(-1)!;
+    const between = [...document.querySelectorAll('main *')].filter(
+      (node) =>
+        lastLine.compareDocumentPosition(node) & Node.DOCUMENT_POSITION_FOLLOWING &&
+        node.compareDocumentPosition(input()) & Node.DOCUMENT_POSITION_FOLLOWING &&
+        !lastLine.contains(node) &&
+        !node.contains(input()) &&
+        !node.contains(lastLine) &&
+        node.matches('input, button, h2, summary'),
+    );
+    expect(between).toHaveLength(0);
+  });
+
+  it('accepts the simplified line and lets the learner continue to the answer', async () => {
+    const { submit } = setup();
+    await submit('x + 2 = 18/3');
+    await submit('x + 2 = 6');
+    expect(status()).toBeEmptyDOMElement();
+    const lines = within(screen.getByRole('list', { name: 'Working so far' })).getAllByRole('listitem');
+    expect(lines).toHaveLength(3);
+    expect(screen.getByRole('math', { name: 'x + 2 = 18/3' })).toBeInTheDocument();
+    expect(screen.getByRole('math', { name: 'x + 2 = 6' })).toBeInTheDocument();
+
+    await submit('x = 4');
+    expect(status()).toHaveTextContent('Solved');
+    expect(within(screen.getByRole('list', { name: 'Working so far' })).getAllByRole('listitem')).toHaveLength(4);
+  });
+
+  it('guides other numeric simplifications', async () => {
+    const { submit } = setup();
+    await submit('3x + 6 = 18');
+    await submit('3x = 18 - 6');
+    expect(status()).toHaveTextContent('Can you simplify 18 - 6?');
+  });
+
+  it('does not add guidance to a step that is already simplified', async () => {
+    const { submit } = setup();
+    await submit('3x + 6 = 18');
+    expect(status()).toBeEmptyDOMElement();
+  });
+
+  it('keeps the skipped, misconception and unrecognised responses distinct', async () => {
+    const { submit } = setup();
+    await submit('x = 4');
+    expect(status()).toHaveTextContent('That answer is correct. Can you show one step that gets you there?');
+    expect(screen.queryByText('Needs attention')).not.toBeInTheDocument();
+    await submit('3x + 2 = 18');
+    expect(status()).toHaveTextContent('Check what the 3 multiplies inside the brackets.');
+    expect(screen.getByText('Needs attention')).toBeInTheDocument();
+    await submit('6 + 3x = 18');
+    expect(status()).toHaveTextContent('I can’t quite match that step yet.');
+    expect(screen.getByText('Not recognised yet')).toBeInTheDocument();
+  });
+});
+
 describe('practice interaction', () => {
   it('disables Check while the input is empty', async () => {
     const { user, input } = setup();
-    const check = screen.getByRole('button', { name: 'Check' });
+    const check = screen.getByRole('button', { name: 'Check step' });
     expect(check).toBeDisabled();
     await user.type(input(), '   ');
     expect(check).toBeDisabled();
@@ -64,6 +193,7 @@ describe('practice interaction', () => {
     expect(screen.getByRole('button', { name: 'Show an example' })).toBeInTheDocument();
   });
 
+
   it.each([
     ['distribute first', ['3x + 6 = 18', '3x = 12', 'x = 4'], 3],
     ['divide first', ['x + 2 = 6', 'x = 4'], 2],
@@ -89,7 +219,8 @@ describe('equivalent forms', () => {
     expect(screen.queryByRole('math', { name: 'x + 2 = 6' })).not.toBeInTheDocument();
     expect(screen.queryByText('Needs attention')).not.toBeInTheDocument();
     expect(screen.queryByText('Not recognised yet')).not.toBeInTheDocument();
-    expect(status()).toBeEmptyDOMElement();
+    expect(status()).toHaveTextContent('That step works.');
+    expect(status()).toHaveTextContent('Can you simplify 18/3?');
     expect(input()).toHaveValue('');
     expect(input()).toHaveFocus();
 
@@ -220,9 +351,13 @@ describe('progressive help', () => {
     await press('Show next step');
 
     const steps = within(screen.getByRole('list', { name: 'Working so far' }));
-    expect(steps.getAllByRole('listitem')).toHaveLength(1);
+    expect(steps.getAllByRole('listitem')).toHaveLength(2);
     expect(steps.getByRole('math', { name: '3x + 6 = 18' })).toBeInTheDocument();
     expect(steps.getByText('Suggested next step')).toBeInTheDocument();
+    expect(steps.getAllByRole('listitem').map((item) => item.textContent)).toEqual([
+      expect.stringContaining('Given'),
+      expect.stringContaining('Suggested next step'),
+    ]);
     expect(steps.queryByText('Step accepted')).not.toBeInTheDocument();
     expect(screen.queryByText('Needs attention')).not.toBeInTheDocument();
     expect(screen.queryByRole('group', { name: 'Worked example' })).not.toBeInTheDocument();
@@ -242,7 +377,7 @@ describe('progressive help', () => {
     expect(status()).toHaveTextContent('That answer is correct. Can you show one step that gets you there?');
     expect(screen.queryByText('Needs attention')).not.toBeInTheDocument();
     expect(screen.queryByText('Solved')).not.toBeInTheDocument();
-    expect(screen.queryByRole('list', { name: 'Working so far' })).not.toBeInTheDocument();
+    expect(within(screen.getByRole('list', { name: 'Working so far' })).getAllByRole('listitem')).toHaveLength(1);
     expect(input()).toBeInTheDocument();
     expect(input()).toHaveFocus();
 
@@ -292,13 +427,13 @@ describe('completion and restart', () => {
     await submit('x = 4');
     await press('Restart question');
 
-    expect(screen.queryByRole('list', { name: 'Working so far' })).not.toBeInTheDocument();
+    expect(within(screen.getByRole('list', { name: 'Working so far' })).getAllByRole('listitem')).toHaveLength(1);
     expect(status()).toBeEmptyDOMElement();
     expect(screen.queryByRole('group', { name: 'Worked example' })).not.toBeInTheDocument();
     expect(screen.getByRole('math', { name: '3(x + 2) = 18' })).toBeInTheDocument();
     expect(input()).toHaveValue('');
     expect(input()).toHaveFocus();
-    expect(screen.getByRole('button', { name: 'Check' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Check step' })).toBeDisabled();
 
     const value = (label: string) => screen.getByText(label, { selector: 'dt' }).nextElementSibling;
     expect(value('Attempt')).toHaveTextContent('0');

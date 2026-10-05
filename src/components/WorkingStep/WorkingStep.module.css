@@ -25,6 +25,19 @@
   color: var(--color-positive);
 }
 
+.given {
+  background: var(--color-surface-sunken);
+}
+
+.given .status {
+  color: var(--color-text-muted);
+}
+
+.latest {
+  --border-width: 2px;
+  border-color: var(--color-border-strong);
+}
+
 .current {
   --border-width: 2px;
   border-color: var(--color-border-strong);

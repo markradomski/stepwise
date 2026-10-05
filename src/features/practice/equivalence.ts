@@ -31,3 +31,17 @@ export function canonicaliseEquation(normalisedExpression: string): string {
   if (sides.length !== 2) return normalisedExpression;
   return `${simplifySide(sides[0])} = ${simplifySide(sides[1])}`;
 }
+
+export type Simplification = { expression: string; result: string };
+
+// Only a whole side that is numeric-only and not already a plain number counts, e.g. the 18/3 in x + 2 = 18/3.
+export function findSimplification(normalisedExpression: string): Simplification | undefined {
+  for (const side of normalisedExpression.split('=')) {
+    const unwrapped = stripOuterParentheses(side.trim());
+    const value = evaluateNumeric(unwrapped);
+    if (value !== undefined && formatNumber(value) !== unwrapped) {
+      return { expression: unwrapped, result: formatNumber(value) };
+    }
+  }
+  return undefined;
+}

@@ -6,6 +6,7 @@ export type LearningState = {
   attempt: number;
   lastValidation?: string;
   recognition?: string;
+  simplification?: string;
   submittedExpression?: string;
   canonicalExpression?: string;
   helpSource?: string;

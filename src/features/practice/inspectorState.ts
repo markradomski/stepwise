@@ -40,6 +40,7 @@ export function learningStateFromPractice(state: PracticeState): LearningState {
     attempt: state.attemptCount,
     lastValidation: validationLabel(state.lastResult),
     recognition: valid && (equivalent ? 'Equivalent form' : 'Exact match'),
+    simplification: valid?.simplification ? 'Available' : undefined,
     submittedExpression: equivalent ? valid.submittedExpression : undefined,
     canonicalExpression: equivalent ? valid.canonicalExpression : undefined,
     helpSource: helpSourceLabel(state),

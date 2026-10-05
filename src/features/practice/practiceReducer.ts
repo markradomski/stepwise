@@ -24,7 +24,9 @@ export function practiceReducer(state: PracticeState, action: PracticeAction): P
       const input = state.currentInput.trim();
       if (input === '') return state;
 
-      const result = validateStep(practiceQuestion, currentExpression(state), input);
+      const result = validateStep(practiceQuestion, currentExpression(state), input, {
+        simplificationPending: state.steps.at(-1)?.simplification !== undefined,
+      });
       const submissions = state.submissions + 1;
 
       if (result.kind === 'valid' && result.progression === 'skipped') {
@@ -41,6 +43,7 @@ export function practiceReducer(state: PracticeState, action: PracticeAction): P
               canonicalExpression: result.canonicalExpression,
               status: 'accepted',
               source: 'learner',
+              ...(result.simplification && { simplification: result.simplification }),
             },
           ],
           currentInput: '',
