@@ -14,6 +14,8 @@
 }
 
 .working {
+  --line-gutter: 2.25rem;
+  --line-gap: var(--space-2);
   display: block;
 }
 
@@ -24,7 +26,7 @@
 .steps {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--line-gap);
   padding: 0;
 }
 
@@ -33,17 +35,29 @@
 }
 
 .feedbackSlot > * {
-  margin-top: var(--space-4);
+  margin-top: var(--space-3);
 }
 
 .attached > * {
   margin-top: var(--space-2);
 }
 
+.help {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-left: calc(var(--line-gutter) - var(--space-3));
+}
+
+.nextLine {
+  margin-left: calc(var(--line-gutter) - var(--space-3));
+}
+
 .actions {
   display: flex;
   align-items: center;
   gap: var(--space-4);
+  margin-top: var(--space-4);
 }
 
 .inspectorSlot {
@@ -69,6 +83,10 @@
 @media (max-width: 40rem) {
   .stage {
     --gutter: 1.25rem;
+  }
+
+  .working {
+    --line-gutter: 2rem;
   }
 
   .column {

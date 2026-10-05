@@ -24,6 +24,7 @@ export type LearnerViewProps = {
   };
   feedback?: { kind: FeedbackKind; title?: string; message: string };
   hint?: string;
+  hintTitle?: string;
   example?: { before: string; after: string; explanation: string };
   primaryAction?: { label: string; disabled?: boolean; onClick?: () => void };
   completion?: { title: string; message: string; actionLabel: string; onAction?: () => void; focusKey?: number };
@@ -40,6 +41,7 @@ export function LearnerView({
   input,
   feedback,
   hint,
+  hintTitle = 'Hint',
   example,
   primaryAction,
   completion,
@@ -51,7 +53,14 @@ export function LearnerView({
   const lastStepStatus = workingSteps.at(-1)?.status;
   const lastStepNeedsWork = lastStepStatus === 'incorrect' || lastStepStatus === 'unrecognised';
   const lines: LearnerViewProps['workingSteps'] = [{ expression: question.expression, status: 'given' }, ...workingSteps];
-  const latestLine = lines.map((line) => line.status === 'given' || line.status === 'accepted').lastIndexOf(true);
+  const chain = lines.map((line) => line.status === 'given' || line.status === 'accepted');
+  const chainLength = chain.filter(Boolean).length;
+  let chainPosition = 0;
+  const railFor = (isChain: boolean) => {
+    if (!isChain || chainLength < 2) return undefined;
+    chainPosition += 1;
+    return chainPosition === 1 ? 'start' : chainPosition === chainLength ? 'end' : 'middle';
+  };
   const hasAcceptedWork = workingSteps.some((step) => step.status === 'accepted');
   return (
     <div className={`${styles.stage} ${inspector ? styles.withInspector : ''}`}>
@@ -64,35 +73,43 @@ export function LearnerView({
           </h2>
           <ol className={styles.steps} aria-label="Working so far">
             {lines.map((line, index) => (
-              <WorkingStep key={index} {...line} latest={index === latestLine} />
+              <WorkingStep key={index} {...line} rail={railFor(chain[index])} />
             ))}
           </ol>
           <div role="status" className={`${styles.feedbackSlot} ${lastStepNeedsWork ? styles.attached : ''}`}>
-            {feedback && <FeedbackMessage {...feedback} />}
-            {hint && <FeedbackMessage kind="hint" title="Hint" message={hint} />}
-            {example && <WorkedExample {...example} />}
+            {(feedback || hint || example) && (
+              <div className={styles.help}>
+                {feedback && <FeedbackMessage {...feedback} />}
+                {hint && <FeedbackMessage kind="hint" title={hintTitle} message={hint} />}
+                {example && <WorkedExample {...example} />}
+              </div>
+            )}
             {completion && <CompletionPanel {...completion} preview={preview} />}
           </div>
-          {input && (
-            <MathInput
-              label="Write the equation after your next step"
-              helper="Use brackets, + − × ÷ and =."
-              {...input}
-              disabled={preview}
-            />
-          )}
-          {(primaryAction || secondaryAction) && (
-            <div className={styles.actions}>
-              {primaryAction && (
-                <Button
-                  disabled={preview || primaryAction.disabled}
-                  preview={preview}
-                  onClick={primaryAction.onClick}
-                >
-                  {primaryAction.label}
-                </Button>
+          {(input || primaryAction || secondaryAction) && (
+            <div className={styles.nextLine}>
+              {input && (
+                <MathInput
+                  label="Write the equation after your next step"
+                  helper="Use brackets, + − × ÷ and =."
+                  {...input}
+                  disabled={preview}
+                />
               )}
-              {secondaryAction && <HintAction {...secondaryAction} disabled={preview} />}
+              {(primaryAction || secondaryAction) && (
+                <div className={styles.actions}>
+                  {primaryAction && (
+                    <Button
+                      disabled={preview || primaryAction.disabled}
+                      preview={preview}
+                      onClick={primaryAction.onClick}
+                    >
+                      {primaryAction.label}
+                    </Button>
+                  )}
+                  {secondaryAction && <HintAction {...secondaryAction} disabled={preview} />}
+                </div>
+              )}
             </div>
           )}
         </section>

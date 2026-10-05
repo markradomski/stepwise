@@ -20,6 +20,7 @@ The learner UI follows the Figma prototype. The default route is a real three-qu
 
 - truthful question progress (Question 1 of 3, 2 of 3, 3 of 3), a dedicated "Question complete" state that replaces the input with a Next question action (the solved working stays visible), and a final Practice complete state
 - persistent, contextual help beside the primary action. Before any mistake there is a light "Need help?" prompt; a recognised misconception swaps it for specific scaffolding that exposes one action at a time (hint, then a worked example on a different expression, then a clearly labelled next step). Help is deterministic and driven by the learner's own actions and diagnosed difficulty, never by time, and generic help can never escalate to the answer
+- one continuous working sequence: the given line, the learner's accepted steps and any system-suggested step read as a single piece of reasoning, while authorship (a labelled suggested step) and uncertainty (a recognised misconception versus an unrecognised attempt) stay visibly distinct
 - per-question content: each question defines its own generic prompts, hints, worked examples and misconception feedback
 - session-level learning state kept apart from the question on screen
 - a hidden internal mastery estimate, visible only in the inspector (`?inspector=1`) and never to the learner. It is a small illustrative rule, not a validated assessment model.

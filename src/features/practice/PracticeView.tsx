@@ -111,6 +111,7 @@ export function PracticeView({ showInspector }: Props) {
       }
       feedback={feedbackForSession(session)}
       hint={showingHelp && practice.help.hintRequested ? hintFor(question, practice.helpSource) : undefined}
+      hintTitle={practice.helpSource?.kind === 'generic' ? 'Prompt' : 'Hint'}
       example={showingHelp && practice.help.exampleRequested ? example : undefined}
       primaryAction={primaryAction}
       completion={completion}
