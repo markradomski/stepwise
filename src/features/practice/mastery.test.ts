@@ -3,6 +3,7 @@ import type { QuestionResult } from './sessionState';
 
 const clean: QuestionResult = {
   questionId: 'q',
+  genericHelpRequests: 0,
   hintRequests: 0,
   exampleRequests: 0,
   nextStepReveals: 0,

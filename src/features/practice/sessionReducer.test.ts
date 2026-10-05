@@ -51,6 +51,7 @@ describe('session reducer', () => {
     expect(advanced.currentPractice.rejectedExpression).toBeUndefined();
     expect(advanced.currentPractice.help).toEqual({ hintRequested: false, exampleRequested: false, nextStepRevealed: false });
     expect(advanced.currentPractice.usage).toEqual({
+      genericHelpRequests: 0,
       hintRequests: 0,
       exampleRequests: 0,
       nextStepReveals: 0,
@@ -106,6 +107,28 @@ describe('session reducer', () => {
     session = enter(session, 'x + 2 = 6', 'x = 4');
     expect(summariseSession(session).totalHintsRequested).toBe(1);
     expect(summariseSession(next(session)).totalHintsRequested).toBe(1);
+  });
+
+  it('accumulates generic help separately from hints, and resets the help state for each question', () => {
+    let session = apply(createInitialSession(), { type: 'HELP_REQUESTED' });
+    expect(session.currentPractice.help.hintRequested).toBe(true);
+    session = enter(session, 'x + 2 = 6', 'x = 4');
+    session = next(session);
+    expect(session.currentPractice.help.hintRequested).toBe(false);
+    expect(session.currentPractice.helpSource).toBeUndefined();
+    session = apply(session, { type: 'HELP_REQUESTED' });
+    expect(summariseSession(session)).toMatchObject({
+      totalGenericHelpRequests: 2,
+      totalHintsRequested: 0,
+    });
+    session = enter(session, '2x = 12', 'x = 6');
+    expect(summariseSession(next(session)).totalGenericHelpRequests).toBe(2);
+  });
+
+  it('does not penalise generic help in the mastery estimate', () => {
+    const helped = enter(apply(createInitialSession(), { type: 'HELP_REQUESTED' }), 'x + 2 = 6', 'x = 4');
+    expect(helped.masteryEstimate).toBe(solveQuestion1(createInitialSession()).masteryEstimate);
+    expect(helped.results[0].solvedIndependently).toBe(true);
   });
 
   it('accumulates misconception counts by type', () => {

@@ -12,7 +12,7 @@ export type DemoState = {
   input?: { value: string; state: 'empty' | 'focused' };
   feedback?: { kind: FeedbackKind; title?: string; message: string };
   primaryAction?: { label: string; disabled?: boolean };
-  secondaryAction?: { label: string; emphasis?: 'quiet' | 'prominent' };
+  secondaryAction?: { label: string };
   completed?: boolean;
   inspector?: LearningState;
 };
@@ -35,7 +35,7 @@ const partialDistributionState: DemoState = {
   },
   input: { value: '3x + 2 = 18', state: 'empty' },
   primaryAction: { label: 'Check step' },
-  secondaryAction: { label: 'Show an example', emphasis: 'prominent' },
+  secondaryAction: { label: 'Show an example' },
 };
 
 export const demoStates: DemoState[] = [
@@ -70,7 +70,7 @@ export const demoStates: DemoState[] = [
     },
     input: { value: '3x + 2 = 18', state: 'empty' },
     primaryAction: { label: 'Check step' },
-    secondaryAction: { label: 'Need a hint?', emphasis: 'quiet' },
+    secondaryAction: { label: 'Get a hint' },
   },
   partialDistributionState,
   {

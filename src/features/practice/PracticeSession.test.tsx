@@ -43,7 +43,7 @@ describe('three-question session', () => {
   it('moves to Question 2 with fresh working, no old help and a collapsed guide', async () => {
     const { solve, press, input } = setup();
     await solve('3x + 2 = 18');
-    await press('Need a hint?');
+    await press('Get a hint');
     await solve('x + 2 = 6', 'x = 4');
     await press('Next question');
 
@@ -92,7 +92,7 @@ describe('three-question session', () => {
   it('restarts the whole session with Practice again', async () => {
     const { solve, press, input } = setup(true);
     await solve('3x + 2 = 18');
-    await press('Need a hint?');
+    await press('Get a hint');
     await solve('x + 2 = 6', 'x = 4');
     await press('Next question');
     await solve('2x = 12', 'x = 6');
@@ -153,7 +153,7 @@ describe('help across questions', () => {
     const { solve, press } = setup();
     await solve('3x + 2 = 18');
     expect(status()).toHaveTextContent('Check what the 3 multiplies inside the brackets.');
-    await press('Need a hint?');
+    await press('Get a hint');
     expect(status()).toHaveTextContent('The 3 applies to everything inside the brackets.');
   });
 
@@ -163,7 +163,7 @@ describe('help across questions', () => {
     await press('Next question');
     await solve('2x = 22');
     expect(status()).toHaveTextContent('Check what happens when you undo the +5.');
-    await press('Need a hint?');
+    await press('Get a hint');
     expect(status()).toHaveTextContent('What operation undoes +5?');
     await press('Show an example');
     const example = within(screen.getByRole('group', { name: 'Worked example' }));
@@ -184,7 +184,7 @@ describe('help across questions', () => {
     await press('Next question');
     await solve('4x - 1 = 20');
     expect(status()).toHaveTextContent('Check what the 4 multiplies inside the brackets.');
-    await press('Need a hint?');
+    await press('Get a hint');
     expect(status()).toHaveTextContent('The 4 applies to everything inside the brackets.');
     await solve('4x - 1 = 20');
     await press('Show an example');
@@ -209,7 +209,7 @@ describe('hidden mastery', () => {
   it('never shows a mastery estimate, score or percentage to the learner', async () => {
     const { solve, press } = setup();
     await solve('3x + 2 = 18');
-    await press('Need a hint?');
+    await press('Get a hint');
     await solve('x + 2 = 6', 'x = 4');
     await press('Next question');
     await solve('2x = 12', 'x = 6');
@@ -226,7 +226,7 @@ describe('hidden mastery', () => {
     expect(metric('Mastery estimate')).toHaveTextContent('0.50');
 
     await solve('3x + 2 = 18');
-    await press('Need a hint?');
+    await press('Get a hint');
     expect(metric('Hints requested')).toHaveTextContent('1');
     await solve('x + 2 = 6', 'x = 4');
     expect(metric('Completed')).toHaveTextContent('1');
@@ -248,7 +248,7 @@ describe('hidden mastery', () => {
     await solve('x = 6');
     expect(metric('Skipped reasoning')).toHaveTextContent('1');
     await solve('2x = 22');
-    await press('Need a hint?');
+    await press('Get a hint');
     await press('Show an example');
     expect(metric('Examples requested')).toHaveTextContent('1');
     await press('Show next step');

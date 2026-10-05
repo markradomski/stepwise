@@ -12,6 +12,7 @@ import { createInitialSession } from './sessionState';
 type Props = { showInspector?: boolean };
 
 const helpActionEvents: Record<HelpAction, PracticeAction> = {
+  help: { type: 'HELP_REQUESTED' },
   hint: { type: 'HINT_REQUESTED' },
   example: { type: 'EXAMPLE_REQUESTED' },
   nextStep: { type: 'NEXT_STEP_REQUESTED' },
@@ -40,7 +41,7 @@ export function PracticeView({ showInspector }: Props) {
     practice.helpSource?.kind === 'misconception'
       ? contentFor(question, practice.helpSource.misconception)?.example
       : undefined;
-  const showingRejection = practice.rejectedExpression !== undefined;
+  const showingHelp = !practice.help.nextStepRevealed;
 
   const workingSteps = [
     ...practice.steps.map((step) => ({
@@ -72,7 +73,6 @@ export function PracticeView({ showInspector }: Props) {
 
   const secondaryAction = help.action && {
     label: helpActionLabels[help.action],
-    emphasis: help.action === 'hint' ? ('quiet' as const) : ('prominent' as const),
     onClick: () => act(helpActionEvents[help.action!]),
   };
 
@@ -97,8 +97,8 @@ export function PracticeView({ showInspector }: Props) {
             }
       }
       feedback={feedbackForSession(session)}
-      hint={showingRejection && practice.help.hintRequested ? hintFor(question, practice.helpSource) : undefined}
-      example={showingRejection && practice.help.exampleRequested ? example : undefined}
+      hint={showingHelp && practice.help.hintRequested ? hintFor(question, practice.helpSource) : undefined}
+      example={showingHelp && practice.help.exampleRequested ? example : undefined}
       primaryAction={primaryAction}
       secondaryAction={secondaryAction}
       inspector={showInspector ? learningStateFromSession(session) : undefined}

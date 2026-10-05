@@ -38,7 +38,7 @@ describe('question set', () => {
         question.goal,
         ...Object.entries(question.transitions).flatMap(([from, next]) => [from, ...next]),
         ...question.knownMistakes.flatMap((mistake) => [mistake.from, mistake.entered]),
-        ...Object.keys(question.fallbackHints),
+        ...Object.keys(question.genericHints),
         ...Object.keys(question.strategies),
       ];
       for (const expression of expressions) expect(normaliseExpression(expression)).toBe(expression);
@@ -51,13 +51,13 @@ describe('question set', () => {
     for (const question of practiceQuestions) expect(reaches(question, question.initialExpression)).toBe(true);
   });
 
-  it('has content for every misconception a question can diagnose, and a fallback hint for every step', () => {
+  it('has content for every misconception a question can diagnose, and generic help for every step', () => {
     for (const question of practiceQuestions) {
       for (const mistake of question.knownMistakes) {
         expect(contentFor(question, mistake.misconception)).toBeDefined();
         expect(Object.keys(question.transitions)).toContain(mistake.from);
       }
-      for (const step of Object.keys(question.transitions)) expect(question.fallbackHints[step]).toBeTruthy();
+      for (const step of Object.keys(question.transitions)) expect(question.genericHints[step]).toBeTruthy();
     }
   });
 
@@ -117,9 +117,7 @@ describe('question 2', () => {
 
   it('uses its own fallback hint and feedback', () => {
     const state = createInitialPracticeState(question2);
-    expect(hintFor(question2, { kind: 'fallback', canonicalExpression: '2x + 5 = 17' })).toBe(
-      'Think about which operation would undo the +5.',
-    );
+    expect(hintFor(question2, { kind: 'generic', expression: '2x + 5 = 17' })).toBe('What operation would undo the +5?');
     expect(feedbackForResult(check(question2, '2x + 5 = 17', '2x = 22'), state)?.message).toBe(
       'Check what happens when you undo the +5.',
     );
@@ -155,9 +153,9 @@ describe('question 3', () => {
     expect(check(question3, '4(x - 1) = 20', 'x = 6')).toMatchObject({ kind: 'valid', progression: 'skipped' });
   });
 
-  it('keeps the generic fallback for the initial equation', () => {
-    expect(hintFor(question3, { kind: 'fallback', canonicalExpression: '4(x - 1) = 20' })).toBe(
-      'Try making the equation simpler while doing the same thing to both sides.',
+  it('has its own generic help for the initial equation', () => {
+    expect(hintFor(question3, { kind: 'generic', expression: '4(x - 1) = 20' })).toBe(
+      'Think about how you could simplify the left-hand side or both sides.',
     );
   });
 });

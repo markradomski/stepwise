@@ -1,9 +1,9 @@
 import type { ExposureStatus } from '../../lib/learningState';
 import { hasRepeatedFeedback } from './feedback';
 import { currentExpression, type PracticeState } from './practiceState';
-import { contentFor, hintFor, nextStepFor } from './scaffolding';
+import { contentFor, genericHintFor, hintFor, nextStepFor } from './scaffolding';
 
-export type HelpAction = 'hint' | 'example' | 'nextStep';
+export type HelpAction = 'help' | 'hint' | 'example' | 'nextStep';
 
 export type HelpStatus = {
   hint: ExposureStatus;
@@ -14,30 +14,38 @@ export type HelpStatus = {
 };
 
 export const helpActionLabels: Record<HelpAction, string> = {
-  hint: 'Need a hint?',
+  help: 'Need help?',
+  hint: 'Get a hint',
   example: 'Show an example',
   nextStep: 'Show next step',
 };
 
 const noHelpStatus: HelpStatus = { hint: 'hidden', example: 'hidden', nextStep: 'hidden', level: 0 };
 
-// Everything here is derived from the help source and what the learner has asked for.
-// Fallback help stops at a generic hint. Misconception help climbs from a hint to a
-// worked example (once the hint is used or the mistake repeats) and then to the next
-// step (once the example has been seen).
+// Derived from the help source and what the learner has asked for. Generic help (no diagnosis)
+// is one light prompt and cannot escalate, so it is never a shortcut to the answer. Only a
+// recognised misconception climbs from a hint to a worked example (once the hint is used or the
+// mistake repeats) and then to the next step (once the example has been seen). A recognised
+// misconception always replaces generic help.
 export function helpStatus(state: PracticeState): HelpStatus {
   const { helpSource, help } = state;
-  if (!helpSource || hintFor(state.question, helpSource) === undefined) return noHelpStatus;
+  if (help.nextStepRevealed) return revealedStatus;
+  if (state.completed) return noHelpStatus;
 
-  const canAsk = state.rejectedExpression !== undefined && !help.nextStepRevealed;
+  if (!helpSource) {
+    return genericHintFor(state.question, currentExpression(state)) === undefined
+      ? noHelpStatus
+      : { hint: 'available', example: 'hidden', nextStep: 'hidden', level: 0, action: 'help' };
+  }
+  if (hintFor(state.question, helpSource) === undefined) return noHelpStatus;
 
-  if (helpSource.kind === 'fallback') {
+  if (helpSource.kind === 'generic') {
     return {
       hint: help.hintRequested ? 'visible' : 'available',
       example: 'hidden',
       nextStep: 'hidden',
       level: 1,
-      action: canAsk && !help.hintRequested ? 'hint' : undefined,
+      action: help.hintRequested ? undefined : 'help',
     };
   }
 
@@ -48,30 +56,25 @@ export function helpStatus(state: PracticeState): HelpStatus {
   const escalated = help.hintRequested || repeated;
   const hasNextStep = Boolean(scaffold.example && nextStepFor(state.question, currentExpression(state)));
 
-  const hint: ExposureStatus = escalated || help.nextStepRevealed ? 'visible' : 'available';
+  const hint: ExposureStatus = escalated ? 'visible' : 'available';
   const example: ExposureStatus = !scaffold.example
     ? 'hidden'
-    : help.exampleRequested || help.nextStepRevealed
+    : help.exampleRequested
       ? 'visible'
       : escalated
         ? 'available'
         : 'hidden';
-  const nextStep: ExposureStatus = !hasNextStep
-    ? 'hidden'
-    : help.nextStepRevealed
-      ? 'visible'
-      : help.exampleRequested
-        ? 'available'
-        : 'hidden';
+  const nextStep: ExposureStatus = !hasNextStep ? 'hidden' : help.exampleRequested ? 'available' : 'hidden';
 
   const level = nextStep !== 'hidden' ? 3 : example !== 'hidden' ? 2 : 1;
 
   let action: HelpAction | undefined;
-  if (canAsk) {
-    if (nextStep === 'available') action = 'nextStep';
-    else if (example === 'available') action = 'example';
-    else if (!help.hintRequested && !help.exampleRequested && hint === 'available') action = 'hint';
-  }
+  if (nextStep === 'available') action = 'nextStep';
+  else if (example === 'available') action = 'example';
+  else if (!help.hintRequested && !help.exampleRequested && hint === 'available') action = 'hint';
 
   return { hint, example, nextStep, level, action };
 }
+
+// Once a step has been revealed the exposure keeps showing what was used, but nothing more is offered.
+const revealedStatus: HelpStatus = { hint: 'visible', example: 'visible', nextStep: 'visible', level: 3 };

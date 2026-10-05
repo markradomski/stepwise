@@ -6,6 +6,7 @@ import { validateStep } from './validation';
 export type PracticeAction =
   | { type: 'INPUT_CHANGED'; value: string }
   | { type: 'STEP_SUBMITTED' }
+  | { type: 'HELP_REQUESTED' }
   | { type: 'HINT_REQUESTED' }
   | { type: 'EXAMPLE_REQUESTED' }
   | { type: 'NEXT_STEP_REQUESTED' };
@@ -72,9 +73,7 @@ export function practiceReducer(state: PracticeState, action: PracticeAction): P
         const keepsMisconceptionHelp = state.helpSource?.kind === 'misconception';
         return {
           ...rejected,
-          helpSource: keepsMisconceptionHelp
-            ? state.helpSource
-            : { kind: 'fallback', canonicalExpression: currentExpression(state) },
+          helpSource: keepsMisconceptionHelp ? state.helpSource : { kind: 'generic', expression: currentExpression(state) },
         };
       }
 
@@ -90,6 +89,16 @@ export function practiceReducer(state: PracticeState, action: PracticeAction): P
         help: sameMisconception ? state.help : noHelp,
       };
     }
+
+    case 'HELP_REQUESTED':
+      return helpStatus(state).action === 'help'
+        ? {
+            ...state,
+            helpSource: state.helpSource ?? { kind: 'generic', expression: currentExpression(state) },
+            help: { ...state.help, hintRequested: true },
+            usage: { ...state.usage, genericHelpRequests: state.usage.genericHelpRequests + 1 },
+          }
+        : state;
 
     case 'HINT_REQUESTED':
       return helpStatus(state).action === 'hint'

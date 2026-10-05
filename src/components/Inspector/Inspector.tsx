@@ -27,6 +27,7 @@ export function Inspector({ state }: Props) {
           {state.canonicalExpression && <LearningStateRow label="Canonical state" value={state.canonicalExpression} />}
           <LearningStateRow label="Detected misconception" value={state.misconception} />
           {state.helpSource && <LearningStateRow label="Help source" value={state.helpSource} />}
+          {state.helpRequested && <LearningStateRow label="Help requested" value={state.helpRequested} />}
           <LearningStateRow label="Repeated misconception count" value={String(state.repeatedMisconceptionCount)} />
           <LearningStateRow label="Hint level" value={`${state.hintLevel.current} / ${state.hintLevel.max}`} />
           {!state.session && <LearningStateRow label="Mastery estimate" value={state.masteryEstimate.toFixed(2)} />}
@@ -40,6 +41,7 @@ export function Inspector({ state }: Props) {
             <LearningStateRow label="Question" value={state.session.question} />
             <LearningStateRow label="Completed" value={String(state.session.completed)} />
             <LearningStateRow label="Independent solutions" value={String(state.session.independentSolutions)} />
+            <LearningStateRow label="Generic help requests" value={String(state.session.genericHelpRequests)} />
             <LearningStateRow label="Hints requested" value={String(state.session.hintsRequested)} />
             <LearningStateRow label="Examples requested" value={String(state.session.examplesRequested)} />
             <LearningStateRow label="Next-step reveals" value={String(state.session.nextStepReveals)} />

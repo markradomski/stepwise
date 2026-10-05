@@ -11,9 +11,13 @@ export function nextStepFor(question: PracticeQuestion, expression: string): str
   return question.transitions[expression]?.[0];
 }
 
+export function genericHintFor(question: PracticeQuestion, expression: string): string | undefined {
+  return question.genericHints[expression];
+}
+
 export function hintFor(question: PracticeQuestion, source: HelpSource | undefined): string | undefined {
   if (!source) return undefined;
   return source.kind === 'misconception'
     ? contentFor(question, source.misconception)?.hint
-    : question.fallbackHints[source.canonicalExpression];
+    : genericHintFor(question, source.expression);
 }

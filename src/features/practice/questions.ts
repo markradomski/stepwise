@@ -2,7 +2,6 @@ import type { PracticeQuestion } from './practiceQuestion';
 
 const instruction = 'Solve the equation one step at a time.';
 const arithmeticHint = 'Do the division again, then multiply back to check it.';
-const simplifyHint = 'Try making the equation simpler while doing the same thing to both sides.';
 const isolateHint = 'What operation would leave x on its own?';
 
 // Expressions are stored in normalised form. Any expression reachable from the
@@ -47,10 +46,10 @@ const bracketsAdded: PracticeQuestion = {
     },
     ARITHMETIC_ERROR: { feedback: { first: 'Check the arithmetic in your last step.' }, hint: arithmeticHint },
   },
-  fallbackHints: {
-    '3(x + 2) = 18': simplifyHint,
-    '3x + 6 = 18': 'Think about which operation would undo the +6.',
-    'x + 2 = 6': 'Think about which operation would undo the +2.',
+  genericHints: {
+    '3(x + 2) = 18': 'Think about how you could make the equation simpler.',
+    '3x + 6 = 18': 'What operation would undo the +6?',
+    'x + 2 = 6': 'What operation would undo the +2?',
     '3x = 12': isolateHint,
   },
   strategies: { '3x + 6 = 18': 'Distribution', 'x + 2 = 6': 'Divide first' },
@@ -82,8 +81,8 @@ const twoStep: PracticeQuestion = {
     },
     ARITHMETIC_ERROR: { feedback: { first: 'Check the arithmetic in your last step.' }, hint: arithmeticHint },
   },
-  fallbackHints: {
-    '2x + 5 = 17': 'Think about which operation would undo the +5.',
+  genericHints: {
+    '2x + 5 = 17': 'What operation would undo the +5?',
     '2x = 12': isolateHint,
   },
   strategies: { '2x = 12': 'Subtract, then divide' },
@@ -130,10 +129,10 @@ const bracketsSubtracted: PracticeQuestion = {
     },
     ARITHMETIC_ERROR: { feedback: { first: 'Check the arithmetic in your last step.' }, hint: arithmeticHint },
   },
-  fallbackHints: {
-    '4(x - 1) = 20': simplifyHint,
-    '4x - 4 = 20': 'Think about which operation would undo the -4.',
-    'x - 1 = 5': 'Think about which operation would undo the -1.',
+  genericHints: {
+    '4(x - 1) = 20': 'Think about how you could simplify the left-hand side or both sides.',
+    '4x - 4 = 20': 'What operation would undo the −4?',
+    'x - 1 = 5': 'What operation would undo the −1?',
     '4x = 24': isolateHint,
   },
   strategies: { '4x - 4 = 20': 'Distribution', 'x - 1 = 5': 'Divide first' },

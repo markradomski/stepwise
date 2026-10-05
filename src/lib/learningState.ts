@@ -4,6 +4,7 @@ export type SessionState = {
   question: string;
   completed: number;
   independentSolutions: number;
+  genericHelpRequests: number;
   hintsRequested: number;
   examplesRequested: number;
   nextStepReveals: number;
@@ -23,6 +24,7 @@ export type LearningState = {
   submittedExpression?: string;
   canonicalExpression?: string;
   helpSource?: string;
+  helpRequested?: string;
   misconception: string;
   repeatedMisconceptionCount: number;
   hintLevel: { current: number; max: number };

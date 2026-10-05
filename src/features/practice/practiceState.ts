@@ -12,10 +12,10 @@ export type PracticeStep = {
   simplification?: Simplification;
 };
 
-// Fallback help is deliberately not a misconception: an unrecognised step carries no diagnosis.
+// Generic help is deliberately not a misconception: it carries no diagnosis.
 export type HelpSource =
-  | { kind: 'misconception'; misconception: Misconception }
-  | { kind: 'fallback'; canonicalExpression: string };
+  | { kind: 'generic'; expression: string }
+  | { kind: 'misconception'; misconception: Misconception };
 
 export type HelpState = {
   hintRequested: boolean;
@@ -26,6 +26,7 @@ export type HelpState = {
 export const noHelp: HelpState = { hintRequested: false, exampleRequested: false, nextStepRevealed: false };
 
 export type QuestionUsage = {
+  genericHelpRequests: number;
   hintRequests: number;
   exampleRequests: number;
   nextStepReveals: number;
@@ -33,6 +34,7 @@ export type QuestionUsage = {
 };
 
 export const noUsage: QuestionUsage = {
+  genericHelpRequests: 0,
   hintRequests: 0, exampleRequests: 0, nextStepReveals: 0,
   skippedValidSteps: 0,
 };

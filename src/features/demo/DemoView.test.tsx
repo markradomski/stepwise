@@ -34,7 +34,7 @@ describe('first incorrect attempt', () => {
     expect(screen.getByText('Needs attention')).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent('Check what the 3 multiplies inside the brackets.');
     expect(screen.getByRole('button', { name: 'Check step' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Need a hint?' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Get a hint' })).toBeInTheDocument();
     expect(screen.queryByText(/partial distribution|misconception|mastery/i)).not.toBeInTheDocument();
   });
 });
@@ -47,7 +47,7 @@ describe('repeated misconception', () => {
       'Remember: the number outside the brackets multiplies every term inside.',
     );
     expect(screen.getByRole('button', { name: 'Show an example' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Need a hint?' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Get a hint' })).not.toBeInTheDocument();
   });
 });
 
@@ -92,7 +92,7 @@ describe('accessibility', () => {
 
   it('disables the controls of a static fixture natively', () => {
     renderState('03');
-    for (const name of ['Check step', 'Need a hint?']) {
+    for (const name of ['Check step', 'Get a hint']) {
       expect(screen.getByRole('button', { name })).toBeDisabled();
     }
     expect(screen.getByRole('textbox', { name: 'Write the equation after your next step' })).toBeDisabled();

@@ -12,7 +12,8 @@ const skippedReasoningPenalty = 0.01;
 const round = (value: number) => Math.round(value * 100) / 100;
 
 // An illustrative signal only, not a validated assessment model: each completed
-// question adds a small gain, reduced by the help it needed. Clamped to 0-1.
+// question adds a small gain, reduced by the help it needed. Generic "Need help?" prompts
+// carry no penalty; only misconception hints, examples and revealed steps do. Clamped to 0-1.
 export function masteryAfterQuestion(previous: number, result: QuestionResult): number {
   const repeats = Object.values(result.misconceptionCounts).reduce((sum, count) => sum + Math.max(count - 1, 0), 0);
   const gain =

@@ -4,7 +4,7 @@ import { learningStateFromPractice } from './inspectorState';
 import { practiceReducer, type PracticeAction } from './practiceReducer';
 import { createInitialPracticeState, type PracticeState } from './practiceState';
 import { practiceQuestions } from './questions';
-import { hintFor } from './scaffolding';
+import { genericHintFor, hintFor } from './scaffolding';
 
 const question1 = practiceQuestions[0];
 
@@ -47,7 +47,7 @@ describe('practiceReducer', () => {
     expect(state.attemptCount).toBe(1);
     expect(state.misconceptionCounts).toEqual({});
     expect(state.lastResult).toEqual({ kind: 'unrecognised', submittedExpression: 'banana' });
-    expect(state.helpSource).toEqual({ kind: 'fallback', canonicalExpression: '3(x + 2) = 18' });
+    expect(state.helpSource).toEqual({ kind: 'generic', expression: '3(x + 2) = 18' });
     expect(feedbackForState(state)).toEqual({
       kind: 'neutral',
       title: 'I can’t quite match that step yet.',
@@ -121,9 +121,8 @@ describe('skipped steps', () => {
 });
 
 describe('help scaffolding', () => {
-  it('shows nothing before any error', () => {
-    expect(helpStatus(createInitialPracticeState(question1))).toEqual({
-      hint: 'hidden',
+  it('keeps the example and next step hidden before any error', () => {
+    expect(helpStatus(createInitialPracticeState(question1))).toMatchObject({
       example: 'hidden',
       nextStep: 'hidden',
       level: 0,
@@ -195,7 +194,13 @@ describe('help scaffolding', () => {
     const next = submit(revealed, '3x = 12');
     expect(next.steps.map((step) => step.source)).toEqual(['system', 'learner']);
     expect(next.helpSource).toBeUndefined();
-    expect(Object.values(learningStateFromPractice(next).exposure)).toEqual(Array(5).fill('hidden'));
+    expect(learningStateFromPractice(next).exposure).toEqual({
+      mastery: 'hidden',
+      misconceptionLabel: 'hidden',
+      nextSolutionStep: 'hidden',
+      hint: 'available',
+      workedExample: 'hidden',
+    });
   });
 
   it('completes after a revealed step and learner steps', () => {
@@ -304,30 +309,20 @@ describe('simplification guidance', () => {
   });
 });
 
-describe('fallback help', () => {
-  it('records no misconception for unrecognised input', () => {
-    const state = run('6 + 3x = 18');
-    expect(state.misconceptionCounts).toEqual({});
-    expect(state.lastResult?.kind).toBe('unrecognised');
-    expect(state.attemptCount).toBe(1);
-    expect(learningStateFromPractice(state)).toMatchObject({ misconception: 'None', repeatedMisconceptionCount: 0 });
-  });
+const requestHelp = (state: PracticeState) => apply(state, { type: 'HELP_REQUESTED' });
 
-  it('does not count repeated unrecognised steps as repeated misconceptions', () => {
-    const state = run('6 + 3x = 18', '6 + 3x = 18', 'banana');
-    expect(state.misconceptionCounts).toEqual({});
-    expect(helpStatus(state)).toMatchObject({ example: 'hidden', nextStep: 'hidden', level: 1 });
-  });
-
-  it('makes a generic hint available', () => {
-    expect(helpStatus(run('6 + 3x = 18'))).toEqual({
+describe('generic help', () => {
+  it('is available from the start without any diagnosis', () => {
+    const state = createInitialPracticeState(question1);
+    expect(helpStatus(state)).toEqual({
       hint: 'available',
       example: 'hidden',
       nextStep: 'hidden',
-      level: 1,
-      action: 'hint',
+      level: 0,
+      action: 'help',
     });
-    expect(learningStateFromPractice(run('6 + 3x = 18')).exposure).toEqual({
+    expect(learningStateFromPractice(state)).toMatchObject({ helpSource: 'None', helpRequested: 'No' });
+    expect(learningStateFromPractice(state).exposure).toEqual({
       mastery: 'hidden',
       misconceptionLabel: 'hidden',
       nextSolutionStep: 'hidden',
@@ -336,53 +331,112 @@ describe('fallback help', () => {
     });
   });
 
-  it('reveals the generic hint on request and stops there', () => {
-    const state = requestHint(run('6 + 3x = 18'));
-    expect(state.help.hintRequested).toBe(true);
-    expect(helpStatus(state)).toEqual({
-      hint: 'visible',
-      example: 'hidden',
-      nextStep: 'hidden',
-      level: 1,
-      action: undefined,
-    });
+  it('reveals one generic hint and nothing else', () => {
+    const state = requestHelp(createInitialPracticeState(question1));
+    expect(state.helpSource).toEqual({ kind: 'generic', expression: '3(x + 2) = 18' });
+    expect(state.help).toEqual({ hintRequested: true, exampleRequested: false, nextStepRevealed: false });
+    expect(hintFor(question1, state.helpSource)).toBe('Think about how you could make the equation simpler.');
+    expect(helpStatus(state)).toEqual({ hint: 'visible', example: 'hidden', nextStep: 'hidden', level: 1, action: undefined });
+    expect(learningStateFromPractice(state)).toMatchObject({ helpSource: 'Generic', helpRequested: 'Yes', intervention: 'Generic prompt' });
+  });
+
+  it('does not create a misconception or change any misconception count', () => {
+    const state = requestHelp(createInitialPracticeState(question1));
+    expect(state.misconceptionCounts).toEqual({});
+    expect(state.lastResult).toBeUndefined();
+    expect(state.attemptCount).toBe(0);
+    expect(learningStateFromPractice(state)).toMatchObject({ misconception: 'None', repeatedMisconceptionCount: 0 });
+  });
+
+  it('cannot escalate to a worked example or the next step', () => {
+    const state = requestHelp(createInitialPracticeState(question1));
     expect(requestExample(state)).toBe(state);
     expect(requestNextStep(state)).toBe(state);
-    expect(learningStateFromPractice(state).exposure).toMatchObject({
-      hint: 'visible',
-      workedExample: 'hidden',
-      nextSolutionStep: 'hidden',
+    expect(requestHint(state)).toBe(state);
+    expect(requestHelp(state)).toBe(state);
+    const stillGeneric = run('6 + 3x = 18', '6 + 3x = 18', 'banana');
+    expect(helpStatus(requestHelp(stillGeneric))).toMatchObject({ example: 'hidden', nextStep: 'hidden', action: undefined });
+  });
+
+  it('counts a request as generic help, not a hint', () => {
+    expect(requestHelp(createInitialPracticeState(question1)).usage).toMatchObject({
+      genericHelpRequests: 1,
+      hintRequests: 0,
     });
   });
 
-  it('keeps the fallback hint tied to the current supported step', () => {
-    expect(hintFor(question1, run('banana').helpSource)).toBe(
-      'Try making the equation simpler while doing the same thing to both sides.',
-    );
-    expect(hintFor(question1, run('3x + 6 = 18', 'banana').helpSource)).toBe('Think about which operation would undo the +6.');
-    expect(hintFor(question1, run('3x + 6 = 18', '3x = 12', 'banana').helpSource)).toBe(
-      'What operation would leave x on its own?',
-    );
+  it('is replaced by specific help when a misconception is recognised', () => {
+    const state = run('3x + 2 = 18');
+    const helped = submit(requestHelp(createInitialPracticeState(question1)), '3x + 2 = 18');
+    expect(helped.helpSource).toEqual({ kind: 'misconception', misconception: 'PARTIAL_DISTRIBUTION' });
+    expect(helped.help).toEqual({ hintRequested: false, exampleRequested: false, nextStepRevealed: false });
+    expect(helpStatus(helped)).toEqual(helpStatus(state));
+    expect(helpStatus(helped).action).toBe('hint');
+    expect(hintFor(question1, helped.helpSource)).toBe('The 3 applies to everything inside the brackets.');
+    expect(helped.usage.genericHelpRequests).toBe(1);
   });
 
-  it('is superseded by a recognised misconception, which then gets its own help', () => {
-    const state = run('banana', '3x + 2 = 18');
-    expect(state.helpSource).toEqual({ kind: 'misconception', misconception: 'PARTIAL_DISTRIBUTION' });
-    expect(state.help).toEqual({ hintRequested: false, exampleRequested: false, nextStepRevealed: false });
-    expect(hintFor(question1, state.helpSource)).toBe('The 3 applies to everything inside the brackets.');
+  it('still climbs hint, example, next step for a recognised misconception', () => {
+    const afterMistake = run('3x + 2 = 18');
+    expect(helpStatus(afterMistake).action).toBe('hint');
+    const hinted = requestHint(afterMistake);
+    expect(helpStatus(hinted).action).toBe('example');
+    const exampled = requestExample(hinted);
+    expect(helpStatus(exampled).action).toBe('nextStep');
+    expect(requestNextStep(exampled).steps.at(-1)).toMatchObject({ source: 'system', canonicalExpression: '3x + 6 = 18' });
   });
 
-  it('is cleared when the learner returns to a supported step', () => {
-    const state = run('banana', '3x + 6 = 18');
+  it('is cleared by a valid step and offers help again for the new step', () => {
+    const state = run('3x + 6 = 18');
+    const helped = submit(requestHelp(createInitialPracticeState(question1)), '3x + 6 = 18');
+    expect(helped.helpSource).toBeUndefined();
+    expect(helped.help).toEqual({ hintRequested: false, exampleRequested: false, nextStepRevealed: false });
+    expect(helpStatus(helped)).toMatchObject({ action: 'help', hint: 'available', level: 0 });
+    expect(hintFor(question1, requestHelp(helped).helpSource)).toBe('What operation would undo the +6?');
     expect(state.helpSource).toBeUndefined();
-    expect(helpStatus(state).level).toBe(0);
-    expect(Object.values(learningStateFromPractice(state).exposure)).toEqual(Array(5).fill('hidden'));
   });
 
-  it('does not let a diagnosed misconception be replaced by fallback help', () => {
+  it('is available after an unrecognised step and stays generic', () => {
+    const state = run('6 + 3x = 18');
+    expect(state.helpSource).toEqual({ kind: 'generic', expression: '3(x + 2) = 18' });
+    expect(helpStatus(state)).toEqual({ hint: 'available', example: 'hidden', nextStep: 'hidden', level: 1, action: 'help' });
+    expect(state.misconceptionCounts).toEqual({});
+    expect(learningStateFromPractice(state)).toMatchObject({ misconception: 'None', helpSource: 'Generic' });
+  });
+
+  it('keeps a diagnosed misconception when a later step is unrecognised', () => {
     const state = run('3x + 2 = 18', 'banana');
     expect(state.helpSource).toEqual({ kind: 'misconception', misconception: 'PARTIAL_DISTRIBUTION' });
     expect(state.misconceptionCounts).toEqual({ PARTIAL_DISTRIBUTION: 1 });
+  });
+
+  it('offers no help once the question is complete or the next step was revealed', () => {
+    expect(helpStatus(run('x + 2 = 6', 'x = 4')).action).toBeUndefined();
+    const revealed = requestNextStep(requestExample(requestHint(run('3x + 2 = 18'))));
+    expect(helpStatus(revealed).action).toBeUndefined();
+  });
+
+  it('has short generic help for every supported step in every question', () => {
+    const expected: Record<string, string> = {
+      '3(x + 2) = 18': 'Think about how you could make the equation simpler.',
+      '3x + 6 = 18': 'What operation would undo the +6?',
+      'x + 2 = 6': 'What operation would undo the +2?',
+      '3x = 12': 'What operation would leave x on its own?',
+      '2x + 5 = 17': 'What operation would undo the +5?',
+      '2x = 12': 'What operation would leave x on its own?',
+      '4(x - 1) = 20': 'Think about how you could simplify the left-hand side or both sides.',
+      '4x - 4 = 20': 'What operation would undo the −4?',
+      'x - 1 = 5': 'What operation would undo the −1?',
+      '4x = 24': 'What operation would leave x on its own?',
+    };
+    for (const question of practiceQuestions) {
+      for (const expression of Object.keys(question.transitions)) {
+        expect(genericHintFor(question, expression)).toBe(expected[expression]);
+      }
+    }
+    expect(Object.keys(expected)).toHaveLength(
+      practiceQuestions.reduce((total, question) => total + Object.keys(question.transitions).length, 0),
+    );
   });
 });
 
@@ -427,11 +481,11 @@ describe('inspector state', () => {
     });
   });
 
-  it('keeps everything hidden before any error', () => {
+  it('exposes only generic help before any error', () => {
     const inspector = learningStateFromPractice(createInitialPracticeState(question1));
     expect(inspector.attempt).toBe(0);
     expect(inspector.misconception).toBe('None');
     expect(inspector.lastValidation).toBe('None');
-    expect(Object.values(inspector.exposure)).toEqual(Array(5).fill('hidden'));
+    expect(inspector.exposure).toMatchObject({ hint: 'available', workedExample: 'hidden', nextSolutionStep: 'hidden' });
   });
 });

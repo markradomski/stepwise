@@ -16,7 +16,7 @@ export type PracticeQuestion = {
   transitions: Record<string, string[]>;
   knownMistakes: Array<{ from: string; entered: string; misconception: Misconception }>;
   misconceptions: Partial<Record<Misconception, MisconceptionContent>>;
-  fallbackHints: Record<string, string>;
+  genericHints: Record<string, string>;
   strategies: Record<string, string>;
   solvedMessage: string;
 };

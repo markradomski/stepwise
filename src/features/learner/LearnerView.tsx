@@ -26,7 +26,7 @@ export type LearnerViewProps = {
   hint?: string;
   example?: { before: string; after: string; explanation: string };
   primaryAction?: { label: string; disabled?: boolean; onClick?: () => void; focusKey?: number };
-  secondaryAction?: { label: string; emphasis?: 'quiet' | 'prominent'; onClick?: () => void };
+  secondaryAction?: { label: string; onClick?: () => void };
   inspector?: LearningState;
   preview?: boolean;
   guideOpen?: boolean;

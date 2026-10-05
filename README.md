@@ -19,7 +19,8 @@ The visual prototype lives in [Figma](https://www.figma.com/design/DbgJ4GfXerydr
 The learner UI follows the Figma prototype. The default route is a real three-question practice session, starting with `3(x + 2) = 18`, with:
 
 - truthful question progress (Question 1 of 3, 2 of 3, 3 of 3), a Next question action, and a calm Practice complete state
-- per-question adaptive scaffolding: each question defines its own hints, worked examples and misconception feedback
+- persistent, contextual help beside the primary action. Before any mistake there is a light "Need help?" prompt; a recognised misconception swaps it for specific scaffolding that exposes one action at a time (hint, then a worked example on a different expression, then a clearly labelled next step). Help is deterministic and driven by the learner's own actions and diagnosed difficulty, never by time, and generic help can never escalate to the answer
+- per-question content: each question defines its own generic prompts, hints, worked examples and misconception feedback
 - session-level learning state kept apart from the question on screen
 - a hidden internal mastery estimate, visible only in the inspector (`?inspector=1`) and never to the learner. It is a small illustrative rule, not a validated assessment model.
 

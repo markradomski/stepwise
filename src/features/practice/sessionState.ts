@@ -5,6 +5,7 @@ import type { Misconception } from './validation';
 
 export type QuestionResult = {
   questionId: string;
+  genericHelpRequests: number;
   hintRequests: number;
   exampleRequests: number;
   nextStepReveals: number;
@@ -48,6 +49,7 @@ export type SessionSummary = {
   totalQuestions: number;
   questionsCompleted: number;
   independentSolutions: number;
+  totalGenericHelpRequests: number;
   totalHintsRequested: number;
   totalExamplesRequested: number;
   totalNextStepReveals: number;
@@ -76,6 +78,7 @@ export function summariseSession(session: PracticeSessionState): SessionSummary 
     totalQuestions: practiceQuestions.length,
     questionsCompleted: session.results.length,
     independentSolutions: session.results.filter((result) => result.solvedIndependently).length,
+    totalGenericHelpRequests: sum((usage) => usage.genericHelpRequests),
     totalHintsRequested: sum((usage) => usage.hintRequests),
     totalExamplesRequested: sum((usage) => usage.exampleRequests),
     totalNextStepReveals: sum((usage) => usage.nextStepReveals),
