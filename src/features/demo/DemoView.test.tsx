@@ -13,7 +13,7 @@ describe('untouched question', () => {
     expect(screen.getByText('Round 2 of 3')).toBeInTheDocument();
     expect(screen.getByRole('math', { name: '3(x + 2) = 18' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Check' })).toBeInTheDocument();
-    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(screen.getByRole('status')).toBeEmptyDOMElement();
     expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
   });
 });

@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef } from 'react';
+import { useEffect, useId, useRef, type KeyboardEvent } from 'react';
 import styles from './MathInput.module.css';
 
 type Props = {
@@ -6,17 +6,28 @@ type Props = {
   stepNumber: number;
   value?: string;
   focused?: boolean;
+  focusToken?: number;
   helper?: string;
+  onChange?: (value: string) => void;
+  onSubmit?: () => void;
 };
 
-export function MathInput({ label, stepNumber, value, focused, helper }: Props) {
+export function MathInput({ label, stepNumber, value, focused, focusToken = 0, helper, onChange, onSubmit }: Props) {
   const inputId = useId();
   const helperId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (focused) inputRef.current?.focus();
-  }, [focused]);
+    if (focused || focusToken > 0) inputRef.current?.focus();
+  }, [focused, focusToken]);
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') onSubmit?.();
+  };
+
+  const valueProps = onChange
+    ? { value: value ?? '', onChange: (event: { target: { value: string } }) => onChange(event.target.value) }
+    : { defaultValue: value };
 
   return (
     <div className={styles.root}>
@@ -32,7 +43,8 @@ export function MathInput({ label, stepNumber, value, focused, helper }: Props) 
           id={inputId}
           className={styles.input}
           type="text"
-          defaultValue={value}
+          {...valueProps}
+          onKeyDown={handleKeyDown}
           placeholder="Type your step"
           autoComplete="off"
           autoCapitalize="off"

@@ -1,13 +1,17 @@
 import { DemoSelector } from './features/demo/DemoSelector';
 import { DemoView } from './features/demo/DemoView';
-import { getDemoState } from './features/demo/demoStates';
+import { demoStates } from './features/demo/demoStates';
+import { PracticeView } from './features/practice/PracticeView';
 
 export function App() {
-  const state = getDemoState(new URLSearchParams(window.location.search).get('state'));
+  const params = new URLSearchParams(window.location.search);
+  const demoState = demoStates.find((state) => state.id === params.get('state'));
+  const inspectorOn = params.get('inspector') === '1';
+
   return (
     <>
-      <DemoView state={state} />
-      <DemoSelector activeId={state.id} />
+      {demoState ? <DemoView state={demoState} /> : <PracticeView showInspector={inspectorOn} />}
+      <DemoSelector activeId={demoState?.id ?? null} inspectorOn={inspectorOn} />
     </>
   );
 }

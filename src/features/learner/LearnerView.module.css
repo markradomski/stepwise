@@ -14,20 +14,11 @@
 }
 
 .working {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
+  display: block;
 }
 
-.history,
-.attached {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
-
-.attached {
-  gap: var(--space-2);
+.working > * + * {
+  margin-top: var(--space-4);
 }
 
 .steps {
@@ -35,6 +26,18 @@
   flex-direction: column;
   gap: var(--space-2);
   padding: 0;
+}
+
+.working > .feedbackSlot {
+  margin-top: 0;
+}
+
+.feedbackSlot > * {
+  margin-top: var(--space-4);
+}
+
+.attached > * {
+  margin-top: var(--space-2);
 }
 
 .actions {

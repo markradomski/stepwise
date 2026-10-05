@@ -14,7 +14,7 @@ const icons: Record<FeedbackKind, StatusIconKind> = {
 
 export function FeedbackMessage({ kind, title, message }: Props) {
   return (
-    <div role="status" className={`${styles.message} ${styles[kind]}`}>
+    <div className={`${styles.message} ${styles[kind]}`}>
       <StatusIcon kind={icons[kind]} />
       <div className={styles.content}>
         {title && <p className={styles.title}>{title}</p>}

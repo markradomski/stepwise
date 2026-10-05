@@ -16,9 +16,14 @@ The visual prototype lives in [Figma](https://www.figma.com/design/DbgJ4GfXerydr
 
 ## Status
 
-Phase 1 implements the learner UI from the Figma prototype, driven by static fixture states. There is no maths evaluation or adaptive logic yet.
+The learner UI follows the Figma prototype. The default route is a working practice question, `3(x + 2) = 18`, with:
 
-Open `?state=01` to `?state=06` to review each designed state, or use the demo selector at the bottom left. Narrow the viewport to review the mobile layout.
+- real step entry
+- deterministic validation, with no maths library or AI
+- multiple valid solution paths (distribute first, or divide first)
+- feedback for recognised misconceptions, with a stronger message when one repeats
+
+Use the selector at the bottom left to switch views. `?inspector=1` shows the learning-state inspector beside the live question. `?state=01` to `?state=06` render the static designed states for visual review. Narrow the viewport to review the mobile layout.
 
 ## Getting started
 

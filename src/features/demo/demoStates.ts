@@ -104,6 +104,8 @@ export const demoStates: DemoState[] = [
   },
 ];
 
-export function getDemoState(id: string | null): DemoState {
-  return demoStates.find((state) => state.id === id) ?? demoStates[0];
+export function getDemoState(id: string): DemoState {
+  const state = demoStates.find((candidate) => candidate.id === id);
+  if (!state) throw new Error(`Unknown demo state: ${id}`);
+  return state;
 }
