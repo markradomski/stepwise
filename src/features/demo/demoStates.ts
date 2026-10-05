@@ -14,6 +14,7 @@ export type DemoState = {
   completion?: { title: string; message: string; actionLabel: string };
   primaryAction?: { label: string; disabled?: boolean };
   secondaryAction?: { label: string };
+  reopenAction?: { label: string };
   completed?: boolean;
   inspector?: LearningState;
 };
@@ -37,6 +38,7 @@ const partialDistributionState: DemoState = {
   input: { value: '3x + 2 = 18', state: 'empty' },
   primaryAction: { label: 'Check step' },
   secondaryAction: { label: 'Show an example' },
+  reopenAction: { label: 'View hint' },
 };
 
 export const demoStates: DemoState[] = [

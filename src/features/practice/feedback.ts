@@ -1,13 +1,9 @@
 import type { PracticeState } from './practiceState';
 import type { PracticeSessionState } from './sessionState';
 import { contentFor } from './scaffolding';
-import type { Misconception, ValidationResult } from './validation';
+import type { ValidationResult } from './validation';
 
 export type Feedback = { kind: 'error' | 'success' | 'neutral'; title?: string; message: string };
-
-export function hasRepeatedFeedback(state: PracticeState, misconception: Misconception): boolean {
-  return Boolean(contentFor(state.question, misconception)?.feedback.repeated);
-}
 
 export function feedbackForResult(result: ValidationResult, state: PracticeState): Feedback | undefined {
   if (result.kind === 'unrecognised') {

@@ -1,21 +1,20 @@
 import { useEffect, useReducer, useRef, useState } from 'react';
 import { LearnerView } from '../learner/LearnerView';
 import { feedbackForSession } from './feedback';
-import { helpActionLabels, helpStatus, type HelpAction } from './help';
+import { assistanceView, forwardActionLabels, reopenActionLabels, shownHelp, type ForwardAction } from './assistance';
 import { learningStateFromSession } from './inspectorState';
 import type { PracticeAction } from './practiceReducer';
 import { practiceQuestions } from './questions';
-import { contentFor, hintFor } from './scaffolding';
 import { sessionReducer, type SessionAction } from './sessionReducer';
 import { createInitialSession } from './sessionState';
 
 type Props = { showInspector?: boolean };
 
-const helpActionEvents: Record<HelpAction, PracticeAction> = {
-  help: { type: 'HELP_REQUESTED' },
-  hint: { type: 'HINT_REQUESTED' },
-  example: { type: 'EXAMPLE_REQUESTED' },
-  nextStep: { type: 'NEXT_STEP_REQUESTED' },
+const forwardActionEvents: Record<ForwardAction, PracticeAction> = {
+  'need-help': { type: 'HELP_REQUESTED' },
+  'get-hint': { type: 'HINT_REQUESTED' },
+  'show-example': { type: 'EXAMPLE_REQUESTED' },
+  'show-next-step': { type: 'NEXT_STEP_REQUESTED' },
 };
 
 export function PracticeView({ showInspector }: Props) {
@@ -36,12 +35,8 @@ export function PracticeView({ showInspector }: Props) {
     document.documentElement.scrollTop = 0;
   }, [currentQuestionIndex]);
 
-  const help = helpStatus(practice);
-  const example =
-    practice.helpSource?.kind === 'misconception'
-      ? contentFor(question, practice.helpSource.misconception)?.example
-      : undefined;
-  const showingHelp = !practice.help.nextStepRevealed;
+  const view = assistanceView(practice);
+  const help = shownHelp(practice);
 
   const workingSteps = [
     ...practice.steps.map((step) => ({
@@ -85,9 +80,14 @@ export function PracticeView({ showInspector }: Props) {
         onClick: () => act({ type: 'STEP_SUBMITTED' }),
       };
 
-  const secondaryAction = help.action && {
-    label: helpActionLabels[help.action],
-    onClick: () => act(helpActionEvents[help.action!]),
+  const secondaryAction = view.forward && {
+    label: forwardActionLabels[view.forward],
+    onClick: () => act(forwardActionEvents[view.forward!]),
+  };
+
+  const reopenAction = view.reopen && {
+    label: reopenActionLabels[view.reopen],
+    onClick: () => act({ type: 'HELP_REOPENED', content: view.reopen! }),
   };
 
   return (
@@ -110,12 +110,13 @@ export function PracticeView({ showInspector }: Props) {
             }
       }
       feedback={feedbackForSession(session)}
-      hint={showingHelp && practice.help.hintRequested ? hintFor(question, practice.helpSource) : undefined}
-      hintTitle={practice.helpSource?.kind === 'generic' ? 'Prompt' : 'Hint'}
-      example={showingHelp && practice.help.exampleRequested ? example : undefined}
+      hint={help && help.kind !== 'example' ? help.text : undefined}
+      hintTitle={help?.kind === 'prompt' ? 'Prompt' : 'Hint'}
+      example={help?.kind === 'example' ? help.example : undefined}
       primaryAction={primaryAction}
       completion={completion}
       secondaryAction={secondaryAction}
+      reopenAction={reopenAction}
       inspector={showInspector ? learningStateFromSession(session) : undefined}
     />
   );

@@ -12,18 +12,24 @@ export type PracticeStep = {
   simplification?: Simplification;
 };
 
-// Generic help is deliberately not a misconception: it carries no diagnosis.
-export type HelpSource =
-  | { kind: 'generic'; expression: string }
-  | { kind: 'misconception'; misconception: Misconception };
+export type AssistanceContent = 'prompt' | 'hint' | 'example';
 
-export type HelpState = {
-  hintRequested: boolean;
-  exampleRequested: boolean;
-  nextStepRevealed: boolean;
+export type MisconceptionSupport = { hintSeen: boolean; exampleSeen: boolean; occurrences: number };
+
+// What has been shown for one canonical expression. Entries stay for the rest of the question,
+// so progress closes help on screen without forgetting that it was used.
+export type AssistanceEntry = {
+  promptSeen: boolean;
+  nextStepSeen: boolean;
+  misconceptions: Partial<Record<Misconception, MisconceptionSupport>>;
 };
 
-export const noHelp: HelpState = { hintRequested: false, exampleRequested: false, nextStepRevealed: false };
+export type Assistance = {
+  history: Record<string, AssistanceEntry>;
+  shown: AssistanceContent | null;
+};
+
+export const noAssistance: Assistance = { history: {}, shown: null };
 
 export type QuestionUsage = {
   genericHelpRequests: number;
@@ -47,10 +53,11 @@ export type PracticeState = {
   attemptCount: number;
   submissions: number;
   misconceptionCounts: Partial<Record<Misconception, number>>;
-  helpSource?: HelpSource;
+  // The recognised misconception that currently governs help; cleared by progress.
+  diagnosis?: Misconception;
   lastResult?: ValidationResult;
   rejectedExpression?: string;
-  help: HelpState;
+  assistance: Assistance;
   usage: QuestionUsage;
   completed: boolean;
 };
@@ -63,7 +70,7 @@ export function createInitialPracticeState(question: PracticeQuestion): Practice
     attemptCount: 0,
     submissions: 0,
     misconceptionCounts: {},
-    help: noHelp,
+    assistance: noAssistance,
     usage: noUsage,
     completed: false,
   };

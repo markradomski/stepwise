@@ -27,14 +27,27 @@ export function Inspector({ state }: Props) {
           {state.submittedExpression && <LearningStateRow label="Submitted" value={state.submittedExpression} />}
           {state.canonicalExpression && <LearningStateRow label="Canonical state" value={state.canonicalExpression} />}
           <LearningStateRow label="Detected misconception" value={state.misconception} />
-          {state.helpSource && <LearningStateRow label="Help source" value={state.helpSource} />}
-          {state.helpRequested && <LearningStateRow label="Help requested" value={state.helpRequested} />}
           <LearningStateRow label="Repeated misconception count" value={String(state.repeatedMisconceptionCount)} />
           <LearningStateRow label="Hint level" value={`${state.hintLevel.current} / ${state.hintLevel.max}`} />
           {!state.session && <LearningStateRow label="Mastery estimate" value={state.masteryEstimate.toFixed(2)} />}
           <LearningStateRow label="Intervention" value={state.intervention} />
         </dl>
       </section>
+      {state.assistance && (
+        <section>
+          <h3 className="overline">Assistance</h3>
+          <dl>
+            <LearningStateRow label="Source" value={state.assistance.source} />
+            <LearningStateRow label="Current support" value={state.assistance.currentSupport} />
+            <LearningStateRow label="Forward action" value={state.assistance.forwardAction} />
+            <LearningStateRow label="Prompt seen" value={state.assistance.promptSeen} />
+            <LearningStateRow label="Hint seen" value={state.assistance.hintSeen} />
+            <LearningStateRow label="Example seen" value={state.assistance.exampleSeen} />
+            <LearningStateRow label="Next step seen" value={state.assistance.nextStepSeen} />
+            <LearningStateRow label="Repeated difficulty" value={String(state.assistance.repeatedDifficulty)} />
+          </dl>
+        </section>
+      )}
       {state.session && (
         <section>
           <h3 className="overline">Session</h3>

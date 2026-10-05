@@ -49,7 +49,7 @@ describe('session reducer', () => {
       completed: false,
     });
     expect(advanced.currentPractice.rejectedExpression).toBeUndefined();
-    expect(advanced.currentPractice.help).toEqual({ hintRequested: false, exampleRequested: false, nextStepRevealed: false });
+    expect(advanced.currentPractice.assistance).toEqual({ history: {}, shown: null });
     expect(advanced.currentPractice.usage).toEqual({
       genericHelpRequests: 0,
       hintRequests: 0,
@@ -120,11 +120,11 @@ describe('session reducer', () => {
 
   it('accumulates generic help separately from hints, and resets the help state for each question', () => {
     let session = apply(createInitialSession(), { type: 'HELP_REQUESTED' });
-    expect(session.currentPractice.help.hintRequested).toBe(true);
+    expect(session.currentPractice.assistance.shown).toBe('prompt');
     session = enter(session, 'x + 2 = 6', 'x = 4');
     session = next(session);
-    expect(session.currentPractice.help.hintRequested).toBe(false);
-    expect(session.currentPractice.helpSource).toBeUndefined();
+    expect(session.currentPractice.assistance.shown).toBeNull();
+    expect(session.currentPractice.assistance.history).toEqual({});
     session = apply(session, { type: 'HELP_REQUESTED' });
     expect(summariseSession(session)).toMatchObject({
       totalGenericHelpRequests: 2,
@@ -198,7 +198,36 @@ describe('session reducer', () => {
     session = apply(session, { type: 'HINT_REQUESTED' });
     session = next(enter(session, 'x + 2 = 6', 'x = 4'));
     expect(session.currentPractice.rejectedExpression).toBeUndefined();
-    expect(session.currentPractice.helpSource).toBeUndefined();
+    expect(session.currentPractice.assistance.history).toEqual({});
     expect(session.currentPractice.misconceptionCounts).toEqual({});
+  });
+
+  it('counts only newly requested help; reopening and repeated mistakes do not inflate metrics', () => {
+    let session = enter(createInitialSession(), '3x + 2 = 18');
+    session = apply(session, { type: 'HINT_REQUESTED' });
+    session = enter(session, '3x + 2 = 18');
+    const before = summariseSession(session);
+    session = apply(session, { type: 'HELP_REOPENED', content: 'hint' });
+    expect(summariseSession(session)).toEqual(before);
+    expect(before.totalHintsRequested).toBe(1);
+  });
+
+  it('keeps the mastery estimate independent of which help is currently available', () => {
+    const base = enter(createInitialSession(), '3x + 2 = 18');
+    const withHint = apply(base, { type: 'HINT_REQUESTED' });
+    const reopened = apply(enter(withHint, '3x + 2 = 18'), { type: 'HELP_REOPENED', content: 'hint' });
+    const plain = enter(withHint, '3x + 2 = 18');
+    expect(reopened.masteryEstimate).toBe(plain.masteryEstimate);
+    const a = solveQuestion1(reopened);
+    const b = solveQuestion1(plain);
+    expect(a.masteryEstimate).toBe(b.masteryEstimate);
+  });
+
+  it('resets assistance history per question while session totals persist', () => {
+    let session = apply(createInitialSession(), { type: 'HELP_REQUESTED' });
+    session = next(solveQuestion1(session));
+    expect(session.currentPractice.assistance).toEqual({ history: {}, shown: null });
+    session = apply(session, { type: 'HELP_REQUESTED' });
+    expect(summariseSession(session).totalGenericHelpRequests).toBe(2);
   });
 });

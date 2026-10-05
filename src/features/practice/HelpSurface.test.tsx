@@ -45,7 +45,9 @@ describe('help surface', () => {
     expect(screen.queryByRole('math', { name: '3x + 6 = 18' })).not.toBeInTheDocument();
     expect(helpButtons()).toHaveLength(0);
     expect(input()).toHaveFocus();
-    expect(value('Help source')).toHaveTextContent('Generic');
+    expect(value('Source')).toHaveTextContent('Generic');
+    expect(value('Forward action')).toHaveTextContent('None');
+    expect(value('Prompt seen')).toHaveTextContent('Yes');
     expect(value('Detected misconception')).toHaveTextContent('None');
     expect(value('Repeated misconception count')).toHaveTextContent('0');
     expect(value('Worked example')).toHaveTextContent('Hidden');
@@ -58,8 +60,8 @@ describe('help surface', () => {
     await submit('3x + 2 = 18');
     expect(status()).toHaveTextContent('Check what the 3 multiplies inside the brackets.');
     expect(status()).not.toHaveTextContent('Think about how you could make the equation simpler.');
-    expect(helpButtons().map((button) => button.textContent)).toEqual(['Get a hint']);
-    expect(value('Help source')).toHaveTextContent('Misconception');
+    expect(helpButtons().map((button) => button.textContent)).toEqual(['Get a hint', 'View prompt']);
+    expect(value('Source')).toHaveTextContent('Misconception');
   });
 
   it('climbs one help action at a time: Get a hint, Show an example, Show next step', async () => {
@@ -73,12 +75,12 @@ describe('help surface', () => {
 
     await press('Show an example');
     expect(screen.getByRole('group', { name: 'Worked example' })).toBeInTheDocument();
-    expect(helpButtons().map((button) => button.textContent)).toEqual(['Show next step']);
+    expect(helpButtons().map((button) => button.textContent)).toEqual(['Show next step', 'View hint']);
 
     await press('Show next step');
     expect(screen.getByText('Suggested next step')).toBeInTheDocument();
     expect(screen.getByRole('math', { name: '3x + 6 = 18' })).toBeInTheDocument();
-    expect(helpButtons()).toHaveLength(0);
+    expect(helpButtons().map((button) => button.textContent)).toEqual(['Need help?']);
   });
 
   it('shows revealed help between the working and the input, close to the equation it refers to', async () => {
@@ -123,7 +125,7 @@ describe('help surface', () => {
     expect(screen.queryByText(/Think about how you could make the equation simpler/)).not.toBeInTheDocument();
     expect(status()).toBeEmptyDOMElement();
     expect(helpButtons().map((button) => button.textContent)).toEqual(['Need help?']);
-    expect(value('Help requested')).toHaveTextContent('No');
+    expect(value('Prompt seen')).toHaveTextContent('No');
     await press('Need help?');
     expect(status()).toHaveTextContent('What operation would undo the +5?');
     expect(value('Generic help requests')).toHaveTextContent('2');

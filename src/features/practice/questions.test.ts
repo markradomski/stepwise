@@ -2,7 +2,7 @@ import { feedbackForResult } from './feedback';
 import { normaliseExpression } from './normalise';
 import { createInitialPracticeState } from './practiceState';
 import { practiceQuestions } from './questions';
-import { contentFor, hintFor, nextStepFor } from './scaffolding';
+import { contentFor, genericHintFor, nextStepFor } from './scaffolding';
 import { validateStep } from './validation';
 
 const [question1, question2, question3] = practiceQuestions;
@@ -117,7 +117,7 @@ describe('question 2', () => {
 
   it('uses its own fallback hint and feedback', () => {
     const state = createInitialPracticeState(question2);
-    expect(hintFor(question2, { kind: 'generic', expression: '2x + 5 = 17' })).toBe('What operation would undo the +5?');
+    expect(genericHintFor(question2, '2x + 5 = 17')).toBe('What operation would undo the +5?');
     expect(feedbackForResult(check(question2, '2x + 5 = 17', '2x = 22'), state)?.message).toBe(
       'Check what happens when you undo the +5.',
     );
@@ -154,7 +154,7 @@ describe('question 3', () => {
   });
 
   it('has its own generic help for the initial equation', () => {
-    expect(hintFor(question3, { kind: 'generic', expression: '4(x - 1) = 20' })).toBe(
+    expect(genericHintFor(question3, '4(x - 1) = 20')).toBe(
       'Think about how you could simplify the left-hand side or both sides.',
     );
   });

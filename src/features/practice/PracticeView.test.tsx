@@ -202,12 +202,74 @@ describe('practice interaction', () => {
     expect(input()).toHaveFocus();
   });
 
-  it('shows stronger feedback and the example action when the same mistake is repeated', async () => {
+  it('shows stronger feedback when the same mistake is repeated, without revealing help early', async () => {
     const { submit } = setup();
     await submit(mistake);
     await submit(mistake);
     expect(status()).toHaveTextContent('Remember: the number outside the brackets multiplies every term inside.');
+    expect(screen.getByRole('button', { name: 'Get a hint' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Show an example' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: 'Worked example' })).not.toBeInTheDocument();
+  });
+
+  it('moves to Show an example once the hint has been seen and the mistake repeats', async () => {
+    const { submit, press } = setup();
+    await submit(mistake);
+    await press('Get a hint');
+    await submit(mistake);
     expect(screen.getByRole('button', { name: 'Show an example' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'View hint' })).toBeInTheDocument();
+    expect(screen.queryByText('The 3 applies to everything inside the brackets.')).not.toBeInTheDocument();
+  });
+
+  it('moves to Show next step once the example has been seen and the mistake repeats', async () => {
+    const { submit, press } = setup();
+    await submit(mistake);
+    await press('Get a hint');
+    await press('Show an example');
+    await submit(mistake);
+    expect(screen.getByRole('button', { name: 'Show next step' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'View example' })).toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: 'Worked example' })).not.toBeInTheDocument();
+  });
+
+  it('reopens seen help quietly without changing session metrics', async () => {
+    const { submit, press } = setup(true);
+    await submit(mistake);
+    await press('Get a hint');
+    await submit(mistake);
+    const before = screen.getByText('Hints requested', { selector: 'dt' }).nextElementSibling?.textContent;
+    await press('View hint');
+    expect(status()).toHaveTextContent('The 3 applies to everything inside the brackets.');
+    expect(screen.queryByRole('button', { name: 'View hint' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Show an example' })).toBeInTheDocument();
+    expect(screen.getByText('Hints requested', { selector: 'dt' }).nextElementSibling?.textContent).toBe(before);
+    expect(status()).not.toHaveFocus();
+    expect(screen.getByRole('textbox')).toHaveFocus();
+  });
+
+  it('labels prompt, hint and example help distinctly and never uses internal terminology', async () => {
+    const { submit, press } = setup();
+    await press('Need help?');
+    expect(screen.getByText('Prompt')).toBeInTheDocument();
+    await submit(mistake);
+    await press('Get a hint');
+    expect(screen.getByText('Hint')).toBeInTheDocument();
+    await press('Show an example');
+    expect(screen.getByRole('group', { name: 'Worked example' })).toBeInTheDocument();
+    expect(
+      within(screen.getByRole('main')).queryByText(/assistance level|scaffold level|intervention level|diagnosis confidence|escalation stage/i),
+    ).toBeNull();
+  });
+
+  it('offers a single forward action at any time', async () => {
+    const { submit, press } = setup();
+    await submit(mistake);
+    await press('Get a hint');
+    await submit(mistake);
+    const labels = ['Need help?', 'Get a hint', 'Show an example', 'Show next step'];
+    const forwards = labels.filter((label) => screen.queryByRole('button', { name: label }));
+    expect(forwards).toEqual(['Show an example']);
   });
 
 
@@ -300,7 +362,7 @@ describe('unrecognised steps', () => {
     await submit('banana');
     expect(status()).toHaveTextContent('I can’t quite match that step yet.');
     expect(screen.getByText('Detected misconception', { selector: 'dt' }).nextElementSibling).toHaveTextContent('None');
-    expect(screen.getByText('Help source', { selector: 'dt' }).nextElementSibling).toHaveTextContent('Generic');
+    expect(screen.getByText('Source', { selector: 'dt' }).nextElementSibling).toHaveTextContent('Generic');
   });
 
   it('clears the fallback help once the learner returns to a supported step', async () => {
@@ -339,7 +401,7 @@ describe('progressive help', () => {
   it('shows a worked example on a different expression that does not solve the question', async () => {
     const { submit, press } = setup();
     await submit(mistake);
-    await submit(mistake);
+    await press('Get a hint');
     await press('Show an example');
 
     const example = within(screen.getByRole('group', { name: 'Worked example' }));
@@ -445,31 +507,33 @@ describe('inspector', () => {
     const { submit, press } = setup(true);
     expect(value('Hint')).toHaveTextContent('Available');
     expect(value('Worked example')).toHaveTextContent('Hidden');
-    expect(value('Help source')).toHaveTextContent('None');
-    expect(value('Help requested')).toHaveTextContent('No');
+    expect(value('Source')).toHaveTextContent('None');
+    expect(value('Forward action')).toHaveTextContent('Need help?');
     expect(value('Last validation')).toHaveTextContent('None');
 
     await submit(mistake);
     expect(value('Detected misconception')).toHaveTextContent('Partial distribution');
     expect(value('Last validation')).toHaveTextContent('Misconception');
-    expect(value('Hint level')).toHaveTextContent('1 / 3');
-    expect(value('Hint')).toHaveTextContent('Available');
+    expect(value('Forward action')).toHaveTextContent('Get a hint');
     expect(value('Worked example')).toHaveTextContent('Hidden');
 
     await press('Get a hint');
     expect(value('Hint')).toHaveTextContent('Visible');
+    expect(value('Hint seen')).toHaveTextContent('Yes');
+    expect(value('Forward action')).toHaveTextContent('Show an example');
     expect(value('Worked example')).toHaveTextContent('Available');
 
     await submit(mistake);
     expect(value('Attempt')).toHaveTextContent('2');
     expect(value('Repeated misconception count')).toHaveTextContent('2');
-    expect(value('Hint level')).toHaveTextContent('2 / 3');
+    expect(value('Repeated difficulty')).toHaveTextContent('2');
     expect(value('Next solution step')).toHaveTextContent('Hidden');
 
     await press('Show an example');
     expect(value('Worked example')).toHaveTextContent('Visible');
     expect(value('Next solution step')).toHaveTextContent('Available');
     expect(value('Hint level')).toHaveTextContent('3 / 3');
+    expect(value('Forward action')).toHaveTextContent('Show next step');
 
     await press('Show next step');
     expect(value('Next solution step')).toHaveTextContent('Visible');
@@ -497,7 +561,7 @@ describe('inspector', () => {
     await submit('6 + 3x = 18');
     expect(value('Last validation')).toHaveTextContent('Unrecognised');
     expect(value('Detected misconception')).toHaveTextContent('None');
-    expect(value('Help source')).toHaveTextContent('Generic');
+    expect(value('Source')).toHaveTextContent('Generic');
     expect(value('Hint')).toHaveTextContent('Available');
     expect(value('Worked example')).toHaveTextContent('Hidden');
     expect(value('Misconception label')).toHaveTextContent('Hidden');
@@ -505,7 +569,7 @@ describe('inspector', () => {
 
     await press('Need help?');
     expect(value('Hint')).toHaveTextContent('Visible');
-    expect(value('Help requested')).toHaveTextContent('Yes');
+    expect(value('Prompt seen')).toHaveTextContent('Yes');
     expect(value('Worked example')).toHaveTextContent('Hidden');
     expect(value('Next solution step')).toHaveTextContent('Hidden');
   });

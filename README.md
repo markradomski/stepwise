@@ -19,7 +19,7 @@ The visual prototype lives in [Figma](https://www.figma.com/design/DbgJ4GfXerydr
 The learner UI follows the Figma prototype. The default route is a real three-question practice session, starting with `3(x + 2) = 18`, with:
 
 - truthful question progress (Question 1 of 3, 2 of 3, 3 of 3), a dedicated "Question complete" state that replaces the input with a Next question action (the solved working stays visible), and a final Practice complete state
-- persistent, contextual help beside the primary action. Before any mistake there is a light "Need help?" prompt; a recognised misconception swaps it for specific scaffolding that exposes one action at a time (hint, then a worked example on a different expression, then a clearly labelled next step). Help is deterministic and driven by the learner's own actions and diagnosed difficulty, never by time, and generic help can never escalate to the answer
+- persistent, contextual help beside the primary action. Before any mistake there is a light "Need help?" prompt; a recognised misconception swaps it for specific scaffolding that exposes one action at a time (hint, then a worked example on a different expression, then a clearly labelled next step). Support is deterministic and progressively exposed: it follows the learner's own actions and diagnosed difficulty, never time, and generic help can never escalate to the answer. Repeated difficulty changes which help is available next without auto-revealing it, and help already seen can be quietly reopened without counting again
 - one continuous working sequence: the given line, the learner's accepted steps and any system-suggested step read as a single piece of reasoning, while authorship (a labelled suggested step) and uncertainty (a recognised misconception versus an unrecognised attempt) stay visibly distinct
 - per-question content: each question defines its own generic prompts, hints, worked examples and misconception feedback
 - session-level learning state kept apart from the question on screen
@@ -34,7 +34,7 @@ Each question includes:
 - an explicit interaction model: write the equation as it looks after one operation, one line at a time, shown on screen before the first step; the given equation is the first line of the working, accepted steps accumulate beneath it, and valid unsimplified steps (such as `x + 2 = 18/3`) get light guidance to simplify
 - recognition of simple equivalent forms, such as `(x + 2) = 18/3` or `x = 12/3`, while keeping the learner's own expression in the working
 - honest handling of uncertainty: a step it can't match is not called wrong, gets neutral wording and only a generic hint, and is never given a made-up diagnosis
-- progressive scaffolding: a hint, then a worked example, then a system-provided next step, each revealed only when the situation calls for it
+- progressive scaffolding: a prompt, hint, worked example and system-provided next step, each revealed only on request and one forward action at a time
 - a distinction between a correct answer and evidence of reasoning: a correct final answer that skips the working is acknowledged but doesn't complete the question
 
 Developer note:

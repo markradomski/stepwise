@@ -1,5 +1,5 @@
 import type { LearningState } from '../../lib/learningState';
-import { helpStatus } from './help';
+import { assistanceView, currentSupport, forwardActionLabels } from './assistance';
 import { currentExpression, type PracticeState } from './practiceState';
 import { summariseSession, type PracticeSessionState } from './sessionState';
 import type { Misconception, ValidationResult } from './validation';
@@ -23,14 +23,10 @@ function validationLabel(result?: ValidationResult): string {
   return result.kind === 'misconception' ? 'Misconception' : 'Unrecognised';
 }
 
-function helpSourceLabel(state: PracticeState): string {
-  if (!state.helpSource) return 'None';
-  return state.helpSource.kind === 'misconception' ? 'Misconception' : 'Generic';
-}
-
 export function learningStateFromPractice(state: PracticeState): LearningState {
   const detected = state.lastResult?.kind === 'misconception' ? state.lastResult.misconception : undefined;
-  const help = helpStatus(state);
+  const view = assistanceView(state);
+  const level = view.shown === 'example' ? 3 : view.shown === 'hint' ? 2 : view.shown === 'prompt' ? 1 : 0;
   const valid = state.lastResult?.kind === 'valid' ? state.lastResult : undefined;
   const equivalent = valid?.recognition === 'equivalent';
   return {
@@ -44,19 +40,27 @@ export function learningStateFromPractice(state: PracticeState): LearningState {
     simplification: valid?.simplification ? 'Available' : undefined,
     submittedExpression: equivalent ? valid.submittedExpression : undefined,
     canonicalExpression: equivalent ? valid.canonicalExpression : undefined,
-    helpSource: helpSourceLabel(state),
-    helpRequested: state.help.hintRequested || state.help.exampleRequested || state.help.nextStepRevealed ? 'Yes' : 'No',
+    assistance: {
+      source: view.source === 'misconception' ? 'Misconception' : view.source === 'generic' ? 'Generic' : 'None',
+      currentSupport: currentSupport(view),
+      forwardAction: view.forward ? forwardActionLabels[view.forward] : 'None',
+      promptSeen: view.promptSeen ? 'Yes' : 'No',
+      hintSeen: view.hintSeen ? 'Yes' : 'No',
+      exampleSeen: view.exampleSeen ? 'Yes' : 'No',
+      nextStepSeen: view.nextStepSeen ? 'Yes' : 'No',
+      repeatedDifficulty: view.repeatedDifficulty,
+    },
     misconception: detected ? misconceptionLabels[detected] : 'None',
     repeatedMisconceptionCount: detected ? (state.misconceptionCounts[detected] ?? 0) : 0,
-    hintLevel: { current: help.level, max: 3 },
+    hintLevel: { current: level, max: 3 },
     masteryEstimate: 0.61,
-    intervention: state.helpSource?.kind === 'generic' ? 'Generic prompt' : interventions[help.level],
+    intervention: view.source === 'generic' && view.shown === 'prompt' ? 'Generic prompt' : interventions[level],
     exposure: {
       mastery: 'hidden',
       misconceptionLabel: 'hidden',
-      nextSolutionStep: help.nextStep,
-      hint: help.hint,
-      workedExample: help.example,
+      nextSolutionStep: view.nextStep,
+      hint: view.hint,
+      workedExample: view.example,
     },
   };
 }

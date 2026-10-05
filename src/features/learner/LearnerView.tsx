@@ -4,6 +4,7 @@ import { FeedbackMessage, type FeedbackKind } from '../../components/FeedbackMes
 import { HintAction } from '../../components/HintAction/HintAction';
 import { InteractionGuide } from '../../components/InteractionGuide/InteractionGuide';
 import { Inspector } from '../../components/Inspector/Inspector';
+import { ReopenAction } from '../../components/ReopenAction/ReopenAction';
 import { MathInput } from '../../components/MathInput/MathInput';
 import { QuestionShell } from '../../components/QuestionShell/QuestionShell';
 import { WorkedExample } from '../../components/WorkedExample/WorkedExample';
@@ -29,6 +30,7 @@ export type LearnerViewProps = {
   primaryAction?: { label: string; disabled?: boolean; onClick?: () => void };
   completion?: { title: string; message: string; actionLabel: string; onAction?: () => void; focusKey?: number };
   secondaryAction?: { label: string; onClick?: () => void };
+  reopenAction?: { label: string; onClick?: () => void };
   inspector?: LearningState;
   preview?: boolean;
   guideOpen?: boolean;
@@ -46,6 +48,7 @@ export function LearnerView({
   primaryAction,
   completion,
   secondaryAction,
+  reopenAction,
   inspector,
   preview,
   guideOpen,
@@ -86,7 +89,7 @@ export function LearnerView({
             )}
             {completion && <CompletionPanel {...completion} preview={preview} />}
           </div>
-          {(input || primaryAction || secondaryAction) && (
+          {(input || primaryAction || secondaryAction || reopenAction) && (
             <div className={styles.nextLine}>
               {input && (
                 <MathInput
@@ -96,7 +99,7 @@ export function LearnerView({
                   disabled={preview}
                 />
               )}
-              {(primaryAction || secondaryAction) && (
+              {(primaryAction || secondaryAction || reopenAction) && (
                 <div className={styles.actions}>
                   {primaryAction && (
                     <Button
@@ -108,6 +111,7 @@ export function LearnerView({
                     </Button>
                   )}
                   {secondaryAction && <HintAction {...secondaryAction} disabled={preview} />}
+                  {reopenAction && <ReopenAction {...reopenAction} disabled={preview} />}
                 </div>
               )}
             </div>

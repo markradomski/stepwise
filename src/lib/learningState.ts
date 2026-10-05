@@ -12,6 +12,17 @@ export type SessionState = {
   masteryEstimate: number;
 };
 
+export type AssistanceState = {
+  source: string;
+  currentSupport: string;
+  forwardAction: string;
+  promptSeen: string;
+  hintSeen: string;
+  exampleSeen: string;
+  nextStepSeen: string;
+  repeatedDifficulty: number;
+};
+
 export type LearningState = {
   concept: string;
   currentExpression?: string;
@@ -24,8 +35,7 @@ export type LearningState = {
   simplification?: string;
   submittedExpression?: string;
   canonicalExpression?: string;
-  helpSource?: string;
-  helpRequested?: string;
+  assistance?: AssistanceState;
   misconception: string;
   repeatedMisconceptionCount: number;
   hintLevel: { current: number; max: number };
