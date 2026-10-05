@@ -10,6 +10,10 @@ The project is intentionally narrow in scope.
 
 React, TypeScript, Vite, CSS Modules, Vitest and React Testing Library.
 
+## Design
+
+The visual prototype lives in [Figma](https://www.figma.com/design/DbgJ4GfXerydrZzYUhEvol).
+
 ## Getting started
 
 ```bash
