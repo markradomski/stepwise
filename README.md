@@ -2,6 +2,8 @@
 
 An adaptive maths-practice prototype that reveals the right amount of help at the right time.
 
+**Live demo: https://stepwise.mrad-a17.workers.dev/** · try `/?inspector=1` to see the internal state
+
 Stepwise explores how a learning interface can maintain rich internal state while exposing only the support a learner currently needs. The topic is deliberately narrow (linear equations, three questions) so the interaction and system design can be examined closely.
 
 ![Misconception feedback, with a contextual Help surface open](docs/assets/learner-misconception-help.png)
@@ -31,7 +33,7 @@ npm install
 npm run dev
 ```
 
-No deployed URL exists yet (see [deployment notes](#deployment-status)). Everything runs locally and works without any API key.
+The live demo is at https://stepwise.mrad-a17.workers.dev/ (see [deployment status](#deployment-status)). Locally, everything runs and works without any API key.
 
 | Route | What you get |
 | --- | --- |
@@ -144,13 +146,16 @@ Keyboard-only use works end to end (submit with Enter, Tab to Help, Explain this
 
 ## Deployment status
 
-The Cloudflare adapter exists but has **not been deployed or production-tested**, and no git remote is configured. Remaining: create the Pages project, set the server-side secrets, configure `dist` as the build output, verify the Functions routes, and test rate-limit and cache behaviour live (state is per isolate).
+Deployed on **Cloudflare Workers** (static assets plus a Worker entry, `worker/index.ts`, configured by `wrangler.jsonc`) at https://stepwise.mrad-a17.workers.dev/. The Worker serves the built app and the explanation API (`/api/explain`, `/api/explain/config`) through the same shared handler used by the local dev server. Model credentials are server-side runtime secrets and never reach the client.
+
+Verified live: the learner flow (desktop and 390px), deterministic routing for accepted steps, the real model-backed Suggested next step explanation (provider LLM, outcome Success, prompt `explanation-prompt/1`), a cache miss followed by a hit, keyboard use, and a check that the deployed bundle and API responses contain no secrets. Model fallback and rate limiting are verified by automated tests and by running the Worker locally against a mock model; they were not deliberately triggered in production. Details: [docs/RELEASE_1.md](docs/RELEASE_1.md).
 
 ## Documents
 
 - [docs/CASE_STUDY.md](docs/CASE_STUDY.md): the product story
 - [docs/EXPLANATION_MODEL_BOUNDARY.md](docs/EXPLANATION_MODEL_BOUNDARY.md): the technical model boundary
 - [docs/EXPLANATION_EVALUATION.md](docs/EXPLANATION_EVALUATION.md): evaluation evidence
+- [docs/RELEASE_1.md](docs/RELEASE_1.md): deployment and live verification
 - [docs/PORTFOLIO_SUMMARY.md](docs/PORTFOLIO_SUMMARY.md): short copy for a portfolio site
 - Design: [Figma](https://www.figma.com/design/DbgJ4GfXerydrZzYUhEvol)
 

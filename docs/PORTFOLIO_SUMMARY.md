@@ -17,4 +17,6 @@
 
 **Model / evaluation note:** On a 12-case corpus with `claude-haiku-4-5-20251001` the model was better than deterministic text in 2 cases, the same in 5 and worse in 4, so it is routed to only one explanation type. The Better / Same / Worse review was done by an AI assistant and awaits independent human review; the sample is small.
 
-**Links:** repository README, `docs/CASE_STUDY.md`, `docs/EXPLANATION_EVALUATION.md`. No live URL or git remote yet.
+**Live demo:** https://stepwise.mrad-a17.workers.dev/
+
+**Source:** https://github.com/markradomski/stepwise (README, `docs/CASE_STUDY.md`, `docs/EXPLANATION_EVALUATION.md`)
