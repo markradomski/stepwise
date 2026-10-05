@@ -48,6 +48,16 @@ No deployed URL exists yet (see [deployment notes](#deployment-status)). Everyth
 4. Press **Explain this** on the Suggested next step. With a key configured this is the one place the model is tried first; without one the deterministic explanation appears. Either way the inspector shows provider, routing and outcome.
 5. Open `?state=17` for a provider fallback example, then read [Model evaluation](#model-evaluation).
 
+### More screenshots
+
+Static reference states (cropped from `?state=` previews):
+
+| Suggested next step, with an explanation | Question complete |
+| --- | --- |
+| ![Suggested next step with an Explain this surface](docs/assets/learner-suggested-step-explanation.png) | ![Question complete state](docs/assets/learner-question-complete.png) |
+
+![Inspector showing a model timeout falling back to the deterministic explanation](docs/assets/inspector-routing-fallback.png)
+
 ## Architecture
 
 ```mermaid
