@@ -1,0 +1,14 @@
+{
+  "name": "stepwise",
+  "main": "worker/index.ts",
+  "compatibility_date": "2025-01-01",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  // Runtime variables and secrets (EXPLANATION_PROVIDER, LLM_API_KEY, LLM_MODEL, ...) are set in the Cloudflare
+  // dashboard. keep_vars stops a deploy from removing them.
+  "keep_vars": true
+}
