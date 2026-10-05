@@ -16,7 +16,14 @@ The visual prototype lives in [Figma](https://www.figma.com/design/DbgJ4GfXerydr
 
 ## Status
 
-The learner UI follows the Figma prototype. The default route is a working practice question, `3(x + 2) = 18`, with:
+The learner UI follows the Figma prototype. The default route is a real three-question practice session, starting with `3(x + 2) = 18`, with:
+
+- truthful question progress (Question 1 of 3, 2 of 3, 3 of 3), a Next question action, and a calm Practice complete state
+- per-question adaptive scaffolding: each question defines its own hints, worked examples and misconception feedback
+- session-level learning state kept apart from the question on screen
+- a hidden internal mastery estimate, visible only in the inspector (`?inspector=1`) and never to the learner. It is a small illustrative rule, not a validated assessment model.
+
+Each question includes:
 
 - real step entry
 - deterministic validation, with no maths library or AI

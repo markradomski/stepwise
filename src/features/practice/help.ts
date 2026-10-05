@@ -1,8 +1,7 @@
 import type { ExposureStatus } from '../../lib/learningState';
 import { hasRepeatedFeedback } from './feedback';
-import { practiceQuestion } from './practiceQuestion';
 import { currentExpression, type PracticeState } from './practiceState';
-import { hintFor, nextStepFor, scaffolds } from './scaffolding';
+import { contentFor, hintFor, nextStepFor } from './scaffolding';
 
 export type HelpAction = 'hint' | 'example' | 'nextStep';
 
@@ -28,7 +27,7 @@ const noHelpStatus: HelpStatus = { hint: 'hidden', example: 'hidden', nextStep: 
 // step (once the example has been seen).
 export function helpStatus(state: PracticeState): HelpStatus {
   const { helpSource, help } = state;
-  if (!helpSource || hintFor(helpSource) === undefined) return noHelpStatus;
+  if (!helpSource || hintFor(state.question, helpSource) === undefined) return noHelpStatus;
 
   const canAsk = state.rejectedExpression !== undefined && !help.nextStepRevealed;
 
@@ -43,10 +42,11 @@ export function helpStatus(state: PracticeState): HelpStatus {
   }
 
   const { misconception } = helpSource;
-  const scaffold = scaffolds[misconception];
-  const repeated = hasRepeatedFeedback(misconception) && (state.misconceptionCounts[misconception] ?? 0) > 1;
+  const scaffold = contentFor(state.question, misconception);
+  if (!scaffold) return noHelpStatus;
+  const repeated = hasRepeatedFeedback(state, misconception) && (state.misconceptionCounts[misconception] ?? 0) > 1;
   const escalated = help.hintRequested || repeated;
-  const hasNextStep = Boolean(scaffold.example && nextStepFor(practiceQuestion, currentExpression(state)));
+  const hasNextStep = Boolean(scaffold.example && nextStepFor(state.question, currentExpression(state)));
 
   const hint: ExposureStatus = escalated || help.nextStepRevealed ? 'visible' : 'available';
   const example: ExposureStatus = !scaffold.example

@@ -1,7 +1,20 @@
 export type ExposureStatus = 'hidden' | 'visible' | 'available';
 
+export type SessionState = {
+  question: string;
+  completed: number;
+  independentSolutions: number;
+  hintsRequested: number;
+  examplesRequested: number;
+  nextStepReveals: number;
+  skippedReasoning: number;
+  masteryEstimate: number;
+};
+
 export type LearningState = {
   concept: string;
+  currentExpression?: string;
+  session?: SessionState;
   strategy: string;
   attempt: number;
   lastValidation?: string;

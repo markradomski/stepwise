@@ -1,5 +1,7 @@
 import { normaliseExpression } from './normalise';
-import { practiceQuestion } from './practiceQuestion';
+import { practiceQuestions } from './questions';
+
+const practiceQuestion = practiceQuestions[0];
 
 describe('normaliseExpression', () => {
   it.each(['3x + 6 = 18', '3x+6=18', '3x +6 =18', '  3 x + 6 = 18 ', '3X+6=18', '3×x+6=18', '3*x+6=18'])(

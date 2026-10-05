@@ -22,7 +22,7 @@ describe('static preview mode', () => {
     expect(preview.getByRole('link', { name: 'Return to Live' })).toBeInTheDocument();
   });
 
-  it('keeps the visual-reference progress inside the preview only', () => {
+  it('shows the reference progress in a static preview', () => {
     open('?state=01');
     expect(screen.getByText('Question 2 of 3')).toBeInTheDocument();
     expect(screen.queryByText(/round/i)).not.toBeInTheDocument();
@@ -117,7 +117,8 @@ describe('live mode', () => {
     expect(screen.getByRole('main')).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 1, name: 'Stepwise' })).toBeInTheDocument();
     expect(container.firstElementChild?.children).toHaveLength(1);
-    expect(screen.queryByText(/round|\b\d+ of \d+\b/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/round/i)).not.toBeInTheDocument();
+    expect(screen.getByText('Question 1 of 3')).toBeInTheDocument();
   });
 
   it('adds only the dev navigation with dev=1', () => {

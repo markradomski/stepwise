@@ -18,11 +18,10 @@ export function QuestionShell({ progress, question }: Props) {
           </svg>
           <h1 className={styles.wordmark}>Stepwise</h1>
         </div>
-        {progress && <Progress {...progress} />}
       </header>
       <section className={styles.question} aria-labelledby="question-heading">
         <h2 id="question-heading" className="overline">
-          Practice question
+          {progress ? <Progress {...progress} /> : 'Practice question'}
         </h2>
         <p>{question.instruction}</p>
       </section>

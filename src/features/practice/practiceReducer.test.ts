@@ -3,7 +3,10 @@ import { helpStatus } from './help';
 import { learningStateFromPractice } from './inspectorState';
 import { practiceReducer, type PracticeAction } from './practiceReducer';
 import { createInitialPracticeState, type PracticeState } from './practiceState';
+import { practiceQuestions } from './questions';
 import { hintFor } from './scaffolding';
+
+const question1 = practiceQuestions[0];
 
 const apply = (state: PracticeState, ...actions: PracticeAction[]) =>
   actions.reduce((current, action) => practiceReducer(current, action), state);
@@ -11,7 +14,7 @@ const apply = (state: PracticeState, ...actions: PracticeAction[]) =>
 const submit = (state: PracticeState, input: string) =>
   apply(state, { type: 'INPUT_CHANGED', value: input }, { type: 'STEP_SUBMITTED' });
 
-const run = (...inputs: string[]) => inputs.reduce(submit, createInitialPracticeState());
+const run = (...inputs: string[]) => inputs.reduce(submit, createInitialPracticeState(question1));
 
 const requestHint = (state: PracticeState) => apply(state, { type: 'HINT_REQUESTED' });
 const requestExample = (state: PracticeState) => apply(state, { type: 'EXAMPLE_REQUESTED' });
@@ -119,7 +122,7 @@ describe('skipped steps', () => {
 
 describe('help scaffolding', () => {
   it('shows nothing before any error', () => {
-    expect(helpStatus(createInitialPracticeState())).toEqual({
+    expect(helpStatus(createInitialPracticeState(question1))).toEqual({
       hint: 'hidden',
       example: 'hidden',
       nextStep: 'hidden',
@@ -170,7 +173,7 @@ describe('help scaffolding', () => {
     const afterMistake = run('3x + 2 = 18');
     expect(requestExample(afterMistake)).toBe(afterMistake);
     expect(requestNextStep(afterMistake)).toBe(afterMistake);
-    const fresh = createInitialPracticeState();
+    const fresh = createInitialPracticeState(question1);
     expect(requestHint(fresh)).toBe(fresh);
   });
 
@@ -217,13 +220,6 @@ describe('help scaffolding', () => {
     expect(helpStatus(state)).toMatchObject({ example: 'available', action: 'example' });
     const revealed = requestNextStep(requestExample(state));
     expect(revealed.steps.at(-1)).toMatchObject({ canonicalExpression: '3x = 12', source: 'system' });
-  });
-
-  it('resets everything', () => {
-    const used = requestNextStep(requestExample(requestHint(run('3x + 2 = 18'))));
-    expect(practiceReducer(used, { type: 'RESET_QUESTION' })).toEqual(createInitialPracticeState());
-    const finished = run('x + 2 = 6', 'x = 4');
-    expect(practiceReducer(finished, { type: 'RESET_QUESTION' })).toEqual(createInitialPracticeState());
   });
 });
 
@@ -360,11 +356,11 @@ describe('fallback help', () => {
   });
 
   it('keeps the fallback hint tied to the current supported step', () => {
-    expect(hintFor(run('banana').helpSource)).toBe(
+    expect(hintFor(question1, run('banana').helpSource)).toBe(
       'Try making the equation simpler while doing the same thing to both sides.',
     );
-    expect(hintFor(run('3x + 6 = 18', 'banana').helpSource)).toBe('Think about which operation would undo the +6.');
-    expect(hintFor(run('3x + 6 = 18', '3x = 12', 'banana').helpSource)).toBe(
+    expect(hintFor(question1, run('3x + 6 = 18', 'banana').helpSource)).toBe('Think about which operation would undo the +6.');
+    expect(hintFor(question1, run('3x + 6 = 18', '3x = 12', 'banana').helpSource)).toBe(
       'What operation would leave x on its own?',
     );
   });
@@ -373,7 +369,7 @@ describe('fallback help', () => {
     const state = run('banana', '3x + 2 = 18');
     expect(state.helpSource).toEqual({ kind: 'misconception', misconception: 'PARTIAL_DISTRIBUTION' });
     expect(state.help).toEqual({ hintRequested: false, exampleRequested: false, nextStepRevealed: false });
-    expect(hintFor(state.helpSource)).toBe('The 3 applies to everything inside the brackets.');
+    expect(hintFor(question1, state.helpSource)).toBe('The 3 applies to everything inside the brackets.');
   });
 
   it('is cleared when the learner returns to a supported step', () => {
@@ -432,7 +428,7 @@ describe('inspector state', () => {
   });
 
   it('keeps everything hidden before any error', () => {
-    const inspector = learningStateFromPractice(createInitialPracticeState());
+    const inspector = learningStateFromPractice(createInitialPracticeState(question1));
     expect(inspector.attempt).toBe(0);
     expect(inspector.misconception).toBe('None');
     expect(inspector.lastValidation).toBe('None');

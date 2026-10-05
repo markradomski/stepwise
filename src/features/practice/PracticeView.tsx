@@ -1,12 +1,13 @@
-import { useReducer, useState } from 'react';
+import { useEffect, useReducer, useRef, useState } from 'react';
 import { LearnerView } from '../learner/LearnerView';
-import { feedbackForState } from './feedback';
+import { feedbackForSession } from './feedback';
 import { helpActionLabels, helpStatus, type HelpAction } from './help';
-import { learningStateFromPractice } from './inspectorState';
-import { practiceQuestion } from './practiceQuestion';
-import { practiceReducer, type PracticeAction } from './practiceReducer';
-import { createInitialPracticeState } from './practiceState';
-import { hintFor, scaffolds } from './scaffolding';
+import { learningStateFromSession } from './inspectorState';
+import type { PracticeAction } from './practiceReducer';
+import { practiceQuestions } from './questions';
+import { contentFor, hintFor } from './scaffolding';
+import { sessionReducer, type SessionAction } from './sessionReducer';
+import { createInitialSession } from './sessionState';
 
 type Props = { showInspector?: boolean };
 
@@ -17,39 +18,55 @@ const helpActionEvents: Record<HelpAction, PracticeAction> = {
 };
 
 export function PracticeView({ showInspector }: Props) {
-  const [state, dispatch] = useReducer(practiceReducer, undefined, createInitialPracticeState);
+  const [session, dispatch] = useReducer(sessionReducer, undefined, createInitialSession);
   const [focusRequest, setFocusRequest] = useState(0);
+  const { currentPractice: practice, currentQuestionIndex } = session;
+  const { question } = practice;
 
-  const act = (action: PracticeAction) => {
+  const act = (action: SessionAction) => {
     dispatch(action);
     setFocusRequest((count) => count + 1);
   };
 
-  const help = helpStatus(state);
-  const example = state.helpSource?.kind === 'misconception' ? scaffolds[state.helpSource.misconception].example : undefined;
-  const showingRejection = state.rejectedExpression !== undefined;
+  const shownQuestionIndex = useRef(currentQuestionIndex);
+  useEffect(() => {
+    if (shownQuestionIndex.current === currentQuestionIndex) return;
+    shownQuestionIndex.current = currentQuestionIndex;
+    document.documentElement.scrollTop = 0;
+  }, [currentQuestionIndex]);
+
+  const help = helpStatus(practice);
+  const example =
+    practice.helpSource?.kind === 'misconception'
+      ? contentFor(question, practice.helpSource.misconception)?.example
+      : undefined;
+  const showingRejection = practice.rejectedExpression !== undefined;
 
   const workingSteps = [
-    ...state.steps.map((step) => ({
+    ...practice.steps.map((step) => ({
       expression: step.expression,
       status: step.status,
       source: step.source,
     })),
-    ...(state.rejectedExpression
+    ...(practice.rejectedExpression
       ? [
           {
-            expression: state.rejectedExpression,
-            status: state.lastResult?.kind === 'misconception' ? ('incorrect' as const) : ('unrecognised' as const),
+            expression: practice.rejectedExpression,
+            status: practice.lastResult?.kind === 'misconception' ? ('incorrect' as const) : ('unrecognised' as const),
           },
         ]
       : []),
   ];
 
-  const primaryAction = state.completed
-    ? { label: 'Restart question', onClick: () => act({ type: 'RESET_QUESTION' }), focusKey: focusRequest }
+  const completedAction = session.completed
+    ? { label: 'Practice again', onClick: () => act({ type: 'PRACTICE_AGAIN' }) }
+    : { label: 'Next question', onClick: () => act({ type: 'NEXT_QUESTION' }) };
+
+  const primaryAction = practice.completed
+    ? { ...completedAction, focusKey: focusRequest }
     : {
         label: 'Check step',
-        disabled: state.currentInput.trim() === '',
+        disabled: practice.currentInput.trim() === '',
         onClick: () => act({ type: 'STEP_SUBMITTED' }),
       };
 
@@ -61,24 +78,30 @@ export function PracticeView({ showInspector }: Props) {
 
   return (
     <LearnerView
-      question={{ instruction: practiceQuestion.instruction, expression: practiceQuestion.initialExpression }}
+      progress={{
+        currentQuestion: currentQuestionIndex + 1,
+        totalQuestions: practiceQuestions.length,
+        complete: practice.completed,
+      }}
+      question={{ instruction: question.instruction, expression: question.initialExpression }}
+      guideOpen={currentQuestionIndex === 0 && practice.steps.length === 0}
       workingSteps={workingSteps}
       input={
-        state.completed
+        practice.completed
           ? undefined
           : {
-              value: state.currentInput,
+              value: practice.currentInput,
               focusToken: focusRequest,
               onChange: (value) => dispatch({ type: 'INPUT_CHANGED', value }),
               onSubmit: () => act({ type: 'STEP_SUBMITTED' }),
             }
       }
-      feedback={feedbackForState(state)}
-      hint={showingRejection && state.help.hintRequested ? hintFor(state.helpSource) : undefined}
-      example={showingRejection && state.help.exampleRequested ? example : undefined}
+      feedback={feedbackForSession(session)}
+      hint={showingRejection && practice.help.hintRequested ? hintFor(question, practice.helpSource) : undefined}
+      example={showingRejection && practice.help.exampleRequested ? example : undefined}
       primaryAction={primaryAction}
       secondaryAction={secondaryAction}
-      inspector={showInspector ? learningStateFromPractice(state) : undefined}
+      inspector={showInspector ? learningStateFromSession(session) : undefined}
     />
   );
 }

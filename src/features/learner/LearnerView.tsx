@@ -29,6 +29,7 @@ export type LearnerViewProps = {
   secondaryAction?: { label: string; emphasis?: 'quiet' | 'prominent'; onClick?: () => void };
   inspector?: LearningState;
   preview?: boolean;
+  guideOpen?: boolean;
 };
 
 export function LearnerView({
@@ -43,6 +44,7 @@ export function LearnerView({
   secondaryAction,
   inspector,
   preview,
+  guideOpen,
 }: LearnerViewProps) {
   const lastStepStatus = workingSteps.at(-1)?.status;
   const lastStepNeedsWork = lastStepStatus === 'incorrect' || lastStepStatus === 'unrecognised';
@@ -63,7 +65,7 @@ export function LearnerView({
     <div className={`${styles.stage} ${inspector ? styles.withInspector : ''}`}>
       <main className={styles.column}>
         <QuestionShell progress={progress} question={question} />
-        <InteractionGuide open={!hasAcceptedWork} />
+        <InteractionGuide open={guideOpen ?? !hasAcceptedWork} />
         <section className={styles.working} aria-labelledby="working-heading">
           <h2 id="working-heading" className="overline">
             Your working

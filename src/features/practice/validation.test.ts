@@ -1,4 +1,6 @@
-import { practiceQuestion } from './practiceQuestion';
+import { practiceQuestions } from './questions';
+
+const practiceQuestion = practiceQuestions[0];
 import { validateStep } from './validation';
 
 const initial = '3(x + 2) = 18';

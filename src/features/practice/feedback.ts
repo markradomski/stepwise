@@ -1,20 +1,13 @@
-import { practiceQuestion } from './practiceQuestion';
 import type { PracticeState } from './practiceState';
+import { practiceQuestions } from './questions';
+import type { PracticeSessionState } from './sessionState';
+import { contentFor } from './scaffolding';
 import type { Misconception, ValidationResult } from './validation';
 
 export type Feedback = { kind: 'error' | 'success' | 'neutral'; title?: string; message: string };
 
-const misconceptionCopy: Record<Misconception, { first: string; repeated?: string }> = {
-  PARTIAL_DISTRIBUTION: {
-    first: 'Check what the 3 multiplies inside the brackets.',
-    repeated: 'Remember: the number outside the brackets multiplies every term inside.',
-  },
-  INCORRECT_INVERSE_OPERATION: { first: 'Check what happens when you undo the +6.' },
-  ARITHMETIC_ERROR: { first: 'Check the arithmetic in your last step.' },
-};
-
-export function hasRepeatedFeedback(misconception: Misconception): boolean {
-  return Boolean(misconceptionCopy[misconception].repeated);
+export function hasRepeatedFeedback(state: PracticeState, misconception: Misconception): boolean {
+  return Boolean(contentFor(state.question, misconception)?.feedback.repeated);
 }
 
 export function feedbackForResult(result: ValidationResult, state: PracticeState): Feedback | undefined {
@@ -35,18 +28,30 @@ export function feedbackForResult(result: ValidationResult, state: PracticeState
     return {
       kind: 'success',
       message:
-        result.canonicalExpression === practiceQuestion.goal
+        result.canonicalExpression === state.question.goal
           ? 'That answer is correct. Can you show one step that gets you there?'
           : 'That step works. Can you show one step that gets you there?',
     };
   }
 
-  const copy = misconceptionCopy[result.misconception];
+  const feedback = contentFor(state.question, result.misconception)?.feedback;
+  if (!feedback) return { kind: 'error', title: 'Have another look', message: 'Check that step again.' };
   const repeated = (state.misconceptionCounts[result.misconception] ?? 0) > 1;
-  return { kind: 'error', title: 'Have another look', message: (repeated && copy.repeated) || copy.first };
+  return { kind: 'error', title: 'Have another look', message: (repeated && feedback.repeated) || feedback.first };
 }
 
 export function feedbackForState(state: PracticeState): Feedback | undefined {
-  if (state.completed) return { kind: 'success', title: 'Solved', message: 'x = 4 makes both sides equal 18.' };
+  if (state.completed) return { kind: 'success', title: 'Solved', message: state.question.solvedMessage };
   return state.lastResult ? feedbackForResult(state.lastResult, state) : undefined;
+}
+
+export function feedbackForSession(session: PracticeSessionState): Feedback | undefined {
+  if (session.completed) {
+    return {
+      kind: 'success',
+      title: 'Practice complete',
+      message: `You finished all ${practiceQuestions.length} questions.`,
+    };
+  }
+  return feedbackForState(session.currentPractice);
 }

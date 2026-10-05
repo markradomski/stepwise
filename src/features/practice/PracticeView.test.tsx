@@ -19,13 +19,11 @@ const mistake = '3x + 2 = 18';
 const learnerColumn = () => within(screen.getByRole('main'));
 const status = () => screen.getByRole('status');
 
-describe('single-question honesty', () => {
-  it('makes no multi-question progress claim', () => {
-    const { container } = render(<PracticeView />);
+describe('session progress', () => {
+  it('starts at the first of three questions with no round language', () => {
+    render(<PracticeView />);
+    expect(screen.getByRole('heading', { level: 2, name: 'Question 1 of 3' })).toBeInTheDocument();
     expect(screen.queryByText(/round/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/\b\d+ of \d+\b/)).not.toBeInTheDocument();
-    expect(container.querySelector('header p')).toBeNull();
-    expect(screen.getByText('Practice question')).toBeInTheDocument();
   });
 
   it('keeps the explanation and the core interaction on screen', () => {
@@ -35,14 +33,6 @@ describe('single-question honesty', () => {
     expect(screen.getByLabelText('Write the equation after your next step')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Check step' })).toBeInTheDocument();
     expect(screen.getByRole('math', { name: '3(x + 2) = 18' })).toBeInTheDocument();
-  });
-
-  it('shows no progress after completing the question either', async () => {
-    const { submit } = setup();
-    await submit('x + 2 = 6');
-    await submit('x = 4');
-    expect(screen.queryByText(/round|\b\d+ of \d+\b|complete$/i)).not.toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent('Solved');
   });
 });
 
@@ -227,7 +217,7 @@ describe('practice interaction', () => {
   ])('completes by the %s path and keeps the working history', async (_name, steps, count) => {
     const { submit } = setup();
     for (const step of steps) await submit(step);
-    expect(screen.queryByText(/question \d of \d|round/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: /Question 1 of 3/ })).toBeInTheDocument();
     expect(status()).toHaveTextContent('Solved');
     expect(screen.getAllByText('Step accepted')).toHaveLength(count);
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
@@ -427,46 +417,24 @@ describe('progressive help', () => {
   });
 });
 
-describe('completion and restart', () => {
-  it('moves focus to Restart question when the question completes', async () => {
+describe('completing a question', () => {
+  it('moves focus to Next question and keeps the working visible', async () => {
     const { submit } = setup();
     await submit('x + 2 = 6');
     await submit('x = 4');
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Restart question' })).toHaveFocus());
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Next question' })).toHaveFocus());
+    expect(screen.getAllByText('Step accepted')).toHaveLength(2);
+    expect(screen.getByRole('heading', { level: 2, name: /Question 1 of 3/ })).toBeInTheDocument();
   });
 
-  it('does not restart when the final step is submitted with Enter', async () => {
+  it('does not advance when the final step is submitted with Enter', async () => {
     const { user, input } = setup();
     await user.type(input(), 'x + 2 = 6{Enter}');
     await user.type(input(), 'x = 4{Enter}');
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Restart question' })).toHaveFocus());
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Next question' })).toHaveFocus());
     expect(status()).toHaveTextContent('Solved');
+    expect(screen.getByRole('heading', { level: 2, name: /Question 1 of 3/ })).toBeInTheDocument();
     expect(screen.getAllByText('Step accepted')).toHaveLength(2);
-  });
-
-  it('restores the initial question and returns focus to the input', async () => {
-    const { input, submit, press } = setup(true);
-    await submit(mistake);
-    await submit(mistake);
-    await press('Show an example');
-    await press('Show next step');
-    await submit('3x = 12');
-    await submit('x = 4');
-    await press('Restart question');
-
-    expect(within(screen.getByRole('list', { name: 'Working so far' })).getAllByRole('listitem')).toHaveLength(1);
-    expect(status()).toBeEmptyDOMElement();
-    expect(screen.queryByRole('group', { name: 'Worked example' })).not.toBeInTheDocument();
-    expect(screen.getByRole('math', { name: '3(x + 2) = 18' })).toBeInTheDocument();
-    expect(input()).toHaveValue('');
-    expect(input()).toHaveFocus();
-    expect(screen.getByRole('button', { name: 'Check step' })).toBeDisabled();
-
-    const value = (label: string) => screen.getByText(label, { selector: 'dt' }).nextElementSibling;
-    expect(value('Attempt')).toHaveTextContent('0');
-    expect(value('Detected misconception')).toHaveTextContent('None');
-    expect(value('Hint')).toHaveTextContent('Hidden');
-    expect(value('Next solution step')).toHaveTextContent('Hidden');
   });
 });
 
@@ -504,7 +472,7 @@ describe('inspector', () => {
     expect(value('Next solution step')).toHaveTextContent('Visible');
     expect(value('Mastery')).toHaveTextContent('Hidden');
     expect(value('Misconception label')).toHaveTextContent('Hidden');
-    expect(screen.getByText('0.61')).toBeInTheDocument();
+    expect(value('Mastery estimate')).toHaveTextContent('0.50');
   });
 
   it('distinguishes exact, equivalent and unrecognised steps', async () => {

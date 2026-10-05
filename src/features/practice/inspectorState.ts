@@ -1,6 +1,7 @@
 import type { LearningState } from '../../lib/learningState';
 import { helpStatus } from './help';
-import type { PracticeState } from './practiceState';
+import { currentExpression, type PracticeState } from './practiceState';
+import { summariseSession, type PracticeSessionState } from './sessionState';
 import type { Misconception, ValidationResult } from './validation';
 
 const misconceptionLabels: Record<Misconception, string> = {
@@ -12,10 +13,8 @@ const misconceptionLabels: Record<Misconception, string> = {
 const interventions = ['None', 'Targeted prompt', 'Concept reminder', 'Guided step'];
 
 function strategyFor(state: PracticeState): string {
-  const path = state.steps.map((step) => step.canonicalExpression);
-  if (path.includes('3x + 6 = 18')) return 'Distribution';
-  if (path.includes('x + 2 = 6')) return 'Divide first';
-  return 'Not yet chosen';
+  const chosen = state.steps.find((step) => state.question.strategies[step.canonicalExpression]);
+  return chosen ? state.question.strategies[chosen.canonicalExpression] : 'Not yet chosen';
 }
 
 function validationLabel(result?: ValidationResult): string {
@@ -36,6 +35,7 @@ export function learningStateFromPractice(state: PracticeState): LearningState {
   const equivalent = valid?.recognition === 'equivalent';
   return {
     concept: 'Linear equations',
+    currentExpression: currentExpression(state),
     strategy: strategyFor(state),
     attempt: state.attemptCount,
     lastValidation: validationLabel(state.lastResult),
@@ -55,6 +55,24 @@ export function learningStateFromPractice(state: PracticeState): LearningState {
       nextSolutionStep: help.nextStep,
       hint: help.hint,
       workedExample: help.example,
+    },
+  };
+}
+
+export function learningStateFromSession(session: PracticeSessionState): LearningState {
+  const summary = summariseSession(session);
+  return {
+    ...learningStateFromPractice(session.currentPractice),
+    masteryEstimate: summary.masteryEstimate,
+    session: {
+      question: `${summary.questionNumber} / ${summary.totalQuestions}`,
+      completed: summary.questionsCompleted,
+      independentSolutions: summary.independentSolutions,
+      hintsRequested: summary.totalHintsRequested,
+      examplesRequested: summary.totalExamplesRequested,
+      nextStepReveals: summary.totalNextStepReveals,
+      skippedReasoning: summary.totalSkippedValidSteps,
+      masteryEstimate: summary.masteryEstimate,
     },
   };
 }
