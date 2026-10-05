@@ -1,7 +1,16 @@
-import { useEffect, useReducer, useRef, useState } from 'react';
+import { useEffect, useId, useReducer, useRef, useState } from 'react';
+import type { HelpSurfaceProps } from '../../components/HelpSurface/HelpSurface';
 import { LearnerView } from '../learner/LearnerView';
 import { feedbackForSession } from './feedback';
-import { assistanceView, forwardActionLabels, reopenActionLabels, shownHelp, type ForwardAction } from './assistance';
+import {
+  assistanceView,
+  availabilityMessages,
+  forwardActionLabels,
+  reopenActionLabels,
+  returnActionLabels,
+  shownHelp,
+  type ForwardAction,
+} from './assistance';
 import { learningStateFromSession } from './inspectorState';
 import type { PracticeAction } from './practiceReducer';
 import { practiceQuestions } from './questions';
@@ -23,8 +32,14 @@ export function PracticeView({ showInspector }: Props) {
   const { currentPractice: practice, currentQuestionIndex } = session;
   const { question } = practice;
 
-  const act = (action: SessionAction) => {
+  // Whether the help surface is open is presentation state; what it shows derives from the assistance model.
+  const [helpOpen, setHelpOpen] = useState(false);
+  const launcherRef = useRef<HTMLButtonElement>(null);
+  const surfaceId = useId();
+
+  const act = (action: SessionAction, keepHelpOpen = false) => {
     dispatch(action);
+    if (!keepHelpOpen) setHelpOpen(false);
     setFocusRequest((count) => count + 1);
   };
 
@@ -80,15 +95,45 @@ export function PracticeView({ showInspector }: Props) {
         onClick: () => act({ type: 'STEP_SUBMITTED' }),
       };
 
-  const secondaryAction = view.forward && {
-    label: forwardActionLabels[view.forward],
-    onClick: () => act(forwardActionEvents[view.forward!]),
+  const toggleHelp = () => {
+    if (helpOpen) return setHelpOpen(false);
+    if (view.forward === 'need-help') dispatch({ type: 'HELP_REQUESTED' });
+    else if (view.shown === null && view.reopen) dispatch({ type: 'HELP_REOPENED', content: view.reopen });
+    setHelpOpen(true);
   };
 
-  const reopenAction = view.reopen && {
-    label: reopenActionLabels[view.reopen],
-    onClick: () => act({ type: 'HELP_REOPENED', content: view.reopen! }),
+  const closeHelp = () => {
+    setHelpOpen(false);
+    launcherRef.current?.focus();
   };
+
+  const forward = view.forward && view.forward !== 'need-help' ? view.forward : undefined;
+  const viewingPrior = view.shown !== null && view.shown !== view.current;
+  const heading: HelpSurfaceProps['heading'] = view.shown === 'prompt' ? 'Prompt' : view.shown === 'hint' ? 'Hint' : view.shown === 'example' ? 'Example' : 'Help';
+
+  const showLauncher = !practice.completed && Boolean(view.forward || view.reopen || view.shown || helpOpen);
+  const helpProps = showLauncher
+    ? {
+        launcher: { label: view.current ? 'Help' : 'Need help?', onClick: toggleHelp, ref: launcherRef },
+        surface: helpOpen
+          ? {
+              id: surfaceId,
+              heading,
+              message: help?.kind === 'example' ? undefined : (help?.text ?? (forward && availabilityMessages[forward])),
+              example: help?.kind === 'example' ? help.example : undefined,
+              forward: forward && {
+                label: forwardActionLabels[forward],
+                onClick: () => act(forwardActionEvents[forward], forward !== 'show-next-step'),
+              },
+              prior: view.reopen && {
+                label: viewingPrior ? returnActionLabels[view.current!] : reopenActionLabels[view.reopen],
+                onClick: () => act({ type: 'HELP_REOPENED', content: view.reopen! }, true),
+              },
+              onClose: closeHelp,
+            }
+          : undefined,
+      }
+    : undefined;
 
   return (
     <LearnerView
@@ -110,13 +155,9 @@ export function PracticeView({ showInspector }: Props) {
             }
       }
       feedback={feedbackForSession(session)}
-      hint={help && help.kind !== 'example' ? help.text : undefined}
-      hintTitle={help?.kind === 'prompt' ? 'Prompt' : 'Hint'}
-      example={help?.kind === 'example' ? help.example : undefined}
       primaryAction={primaryAction}
       completion={completion}
-      secondaryAction={secondaryAction}
-      reopenAction={reopenAction}
+      help={helpProps}
       inspector={showInspector ? learningStateFromSession(session) : undefined}
     />
   );

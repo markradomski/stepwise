@@ -28,26 +28,27 @@ describe('valid step accepted', () => {
 });
 
 describe('first incorrect attempt', () => {
-  it('preserves the step, gives gentle feedback and a quiet hint', () => {
+  it('preserves the step, gives gentle feedback and a closed help launcher', () => {
     renderState('03');
     expect(screen.getByRole('math', { name: '3x + 2 = 18' })).toBeInTheDocument();
     expect(screen.getByText('Needs attention')).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent('Check what the 3 multiplies inside the brackets.');
     expect(screen.getByRole('button', { name: 'Check step' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Get a hint' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Need help?' })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByRole('button', { name: 'Get a hint' })).not.toBeInTheDocument();
     expect(screen.queryByText(/partial distribution|misconception|mastery/i)).not.toBeInTheDocument();
   });
 });
 
 describe('repeated misconception', () => {
-  it('shows stronger feedback and an example action', () => {
+  it('shows stronger feedback with the help launcher closed', () => {
     renderState('04');
     expect(screen.getByRole('math', { name: '3x + 2 = 18' })).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent(
       'Remember: the number outside the brackets multiplies every term inside.',
     );
-    expect(screen.getByRole('button', { name: 'Show an example' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Get a hint' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Help' })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByRole('button', { name: /example|hint/i })).not.toBeInTheDocument();
   });
 });
 
@@ -58,11 +59,12 @@ describe('learning state inspector', () => {
     const inspector = within(screen.getByRole('complementary', { name: 'Learning state inspector' }));
     expect(inspector.getByText('Partial distribution')).toBeInTheDocument();
     expect(inspector.getByText('0.61')).toBeInTheDocument();
-    expect(inspector.getByText('2 / 3')).toBeInTheDocument();
+    expect(inspector.getByText('0 / 3')).toBeInTheDocument();
+    expect(inspector.getByText('Show an example')).toBeInTheDocument();
     expect(exposureOf('Mastery').getByText('Hidden')).toBeInTheDocument();
     expect(exposureOf('Misconception label').getByText('Hidden')).toBeInTheDocument();
     expect(exposureOf('Next solution step').getByText('Hidden')).toBeInTheDocument();
-    expect(exposureOf('Hint').getByText('Visible')).toBeInTheDocument();
+    expect(exposureOf('Hint').getByText('Hidden')).toBeInTheDocument();
     expect(exposureOf('Worked example').getByText('Available')).toBeInTheDocument();
   });
 
@@ -93,7 +95,7 @@ describe('accessibility', () => {
 
   it('disables the controls of a static fixture natively', () => {
     renderState('03');
-    for (const name of ['Check step', 'Get a hint']) {
+    for (const name of ['Check step', 'Need help?']) {
       expect(screen.getByRole('button', { name })).toBeDisabled();
     }
     expect(screen.getByRole('textbox', { name: 'Write the equation after your next step' })).toBeDisabled();
@@ -109,5 +111,41 @@ describe('accessibility', () => {
     const step = screen.getByText('Needs attention').closest('li')!;
     expect(within(step).getByText('Needs attention')).toBeVisible();
     expect(step.querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
+  });
+});
+
+describe('help surface previews', () => {
+  const surface = () => screen.getByRole('region', { name: /^(Help|Prompt|Hint|Example)$/ });
+
+  it('shows help closed on the untouched question', () => {
+    renderState('01');
+    expect(screen.getByRole('button', { name: 'Need help?' })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByRole('region', { name: /^(Help|Prompt|Hint|Example)$/ })).not.toBeInTheDocument();
+  });
+
+  it('shows an open prompt with no further action', () => {
+    renderState('07');
+    expect(within(surface()).getByRole('heading', { name: 'Prompt' })).toBeInTheDocument();
+    expect(within(surface()).getAllByRole('button').map((b) => b.textContent)).toEqual(['Close help']);
+    expect(screen.getByRole('button', { name: 'Help' })).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('shows an open hint with Show an example', () => {
+    renderState('08');
+    expect(within(surface()).getByRole('heading', { name: 'Hint' })).toBeInTheDocument();
+    expect(within(surface()).getByRole('button', { name: 'Show an example' })).toBeInTheDocument();
+  });
+
+  it('shows an open example with Show next step and one quiet View hint', () => {
+    renderState('09');
+    expect(within(surface()).getByRole('group', { name: 'Worked example' })).toBeInTheDocument();
+    expect(within(surface()).getByRole('button', { name: 'Show next step' })).toBeInTheDocument();
+    expect(within(surface()).getByRole('button', { name: 'View hint' })).toBeInTheDocument();
+  });
+
+  it('shows a suggested next step in the sequence with fresh, closed help', () => {
+    renderState('10');
+    expect(screen.getByText('Suggested next step')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Need help?' })).toHaveAttribute('aria-expanded', 'false');
   });
 });

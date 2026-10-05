@@ -24,6 +24,18 @@ export const reopenActionLabels: Record<AssistanceContent, string> = {
   example: 'View example',
 };
 
+export const returnActionLabels: Record<AssistanceContent, string> = {
+  prompt: 'Back to prompt',
+  hint: 'Back to hint',
+  example: 'Back to example',
+};
+
+export const availabilityMessages: Partial<Record<ForwardAction, string>> = {
+  'get-hint': 'A hint is available for this step.',
+  'show-example': 'An example is available for this step.',
+  'show-next-step': 'A suggested next step is available.',
+};
+
 export type AssistanceSource = 'none' | 'generic' | 'misconception';
 
 export type AssistanceView = {
@@ -31,6 +43,7 @@ export type AssistanceView = {
   shown: AssistanceContent | null;
   forward?: ForwardAction;
   reopen?: AssistanceContent;
+  current: AssistanceContent | null;
   promptSeen: boolean;
   hintSeen: boolean;
   exampleSeen: boolean;
@@ -85,6 +98,7 @@ export function assistanceView(state: PracticeState): AssistanceView {
     shown,
     forward,
     reopen,
+    current: support.exampleSeen ? 'example' : support.hintSeen ? 'hint' : entry.promptSeen ? 'prompt' : null,
     promptSeen: entry.promptSeen,
     hintSeen: support.hintSeen,
     exampleSeen: support.exampleSeen,
@@ -94,7 +108,7 @@ export function assistanceView(state: PracticeState): AssistanceView {
     example: shown === 'example' ? 'visible' : forward === 'show-example' ? 'available' : 'hidden',
     nextStep: state.steps.some((step) => step.source === 'system') ? 'visible' : forward === 'show-next-step' ? 'available' : 'hidden',
   };
-  if (state.completed) return { ...base, forward: undefined, reopen: undefined, hint: 'hidden', example: 'hidden', nextStep: 'hidden' };
+  if (state.completed) return { ...base, forward: undefined, reopen: undefined, current: null, hint: 'hidden', example: 'hidden', nextStep: 'hidden' };
   return base;
 }
 

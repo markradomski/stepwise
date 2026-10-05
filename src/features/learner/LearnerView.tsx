@@ -1,13 +1,13 @@
+import type { Ref } from 'react';
 import { Button } from '../../components/Button/Button';
 import { CompletionPanel } from '../../components/CompletionPanel/CompletionPanel';
 import { FeedbackMessage, type FeedbackKind } from '../../components/FeedbackMessage/FeedbackMessage';
+import { HelpSurface, type HelpSurfaceProps } from '../../components/HelpSurface/HelpSurface';
 import { HintAction } from '../../components/HintAction/HintAction';
 import { InteractionGuide } from '../../components/InteractionGuide/InteractionGuide';
 import { Inspector } from '../../components/Inspector/Inspector';
-import { ReopenAction } from '../../components/ReopenAction/ReopenAction';
 import { MathInput } from '../../components/MathInput/MathInput';
 import { QuestionShell } from '../../components/QuestionShell/QuestionShell';
-import { WorkedExample } from '../../components/WorkedExample/WorkedExample';
 import { WorkingStep, type WorkingStepSource, type WorkingStepStatus } from '../../components/WorkingStep/WorkingStep';
 import type { LearningState } from '../../lib/learningState';
 import styles from './LearnerView.module.css';
@@ -24,13 +24,12 @@ export type LearnerViewProps = {
     onSubmit?: () => void;
   };
   feedback?: { kind: FeedbackKind; title?: string; message: string };
-  hint?: string;
-  hintTitle?: string;
-  example?: { before: string; after: string; explanation: string };
   primaryAction?: { label: string; disabled?: boolean; onClick?: () => void };
   completion?: { title: string; message: string; actionLabel: string; onAction?: () => void; focusKey?: number };
-  secondaryAction?: { label: string; onClick?: () => void };
-  reopenAction?: { label: string; onClick?: () => void };
+  help?: {
+    launcher: { label: string; onClick?: () => void; ref?: Ref<HTMLButtonElement> };
+    surface?: HelpSurfaceProps;
+  };
   inspector?: LearningState;
   preview?: boolean;
   guideOpen?: boolean;
@@ -42,13 +41,9 @@ export function LearnerView({
   workingSteps,
   input,
   feedback,
-  hint,
-  hintTitle = 'Hint',
-  example,
   primaryAction,
   completion,
-  secondaryAction,
-  reopenAction,
+  help,
   inspector,
   preview,
   guideOpen,
@@ -80,16 +75,14 @@ export function LearnerView({
             ))}
           </ol>
           <div role="status" className={`${styles.feedbackSlot} ${lastStepNeedsWork ? styles.attached : ''}`}>
-            {(feedback || hint || example) && (
+            {feedback && (
               <div className={styles.help}>
-                {feedback && <FeedbackMessage {...feedback} />}
-                {hint && <FeedbackMessage kind="hint" title={hintTitle} message={hint} />}
-                {example && <WorkedExample {...example} />}
+                <FeedbackMessage {...feedback} />
               </div>
             )}
             {completion && <CompletionPanel {...completion} preview={preview} />}
           </div>
-          {(input || primaryAction || secondaryAction || reopenAction) && (
+          {(input || primaryAction || help) && (
             <div className={styles.nextLine}>
               {input && (
                 <MathInput
@@ -99,7 +92,7 @@ export function LearnerView({
                   disabled={preview}
                 />
               )}
-              {(primaryAction || secondaryAction || reopenAction) && (
+              {(primaryAction || help) && (
                 <div className={styles.actions}>
                   {primaryAction && (
                     <Button
@@ -110,10 +103,17 @@ export function LearnerView({
                       {primaryAction.label}
                     </Button>
                   )}
-                  {secondaryAction && <HintAction {...secondaryAction} disabled={preview} />}
-                  {reopenAction && <ReopenAction {...reopenAction} disabled={preview} />}
+                  {help && (
+                    <HintAction
+                      {...help.launcher}
+                      expanded={Boolean(help.surface)}
+                      controls={help.surface?.id}
+                      disabled={preview}
+                    />
+                  )}
                 </div>
               )}
+              {help?.surface && <HelpSurface {...help.surface} preview={preview} />}
             </div>
           )}
         </section>

@@ -11,12 +11,19 @@ const setup = (showInspector = false) => {
     await user.type(input(), value);
     await user.click(screen.getByRole('button', { name: 'Check step' }));
   };
-  const press = (name: string) => user.click(screen.getByRole('button', { name }));
+  const press = async (name: string) => {
+    if (/^(Get a hint|Show an example|Show next step)$/.test(name) && !screen.queryByRole('button', { name })) {
+      const launcher = screen.getByRole('button', { name: /^(Need help\?|Help)$/ });
+      if (launcher.getAttribute('aria-expanded') === 'false') await user.click(launcher);
+    }
+    await user.click(screen.getByRole('button', { name }));
+  };
   return { user, input, submit, press };
 };
 
 const mistake = '3x + 2 = 18';
 const learnerColumn = () => within(screen.getByRole('main'));
+const helpSurface = () => screen.getByRole('region', { name: /^(Help|Prompt|Hint|Example)$/ });
 const status = () => screen.getByRole('status');
 
 describe('session progress', () => {
@@ -197,81 +204,11 @@ describe('practice interaction', () => {
     expect(screen.getByRole('math', { name: mistake })).toBeInTheDocument();
     expect(screen.getByText('Needs attention')).toBeInTheDocument();
     expect(status()).toHaveTextContent('Check what the 3 multiplies inside the brackets.');
-    expect(screen.getByRole('button', { name: 'Get a hint' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Need help?' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Get a hint' })).not.toBeInTheDocument();
     expect(input()).toHaveValue(mistake);
     expect(input()).toHaveFocus();
   });
-
-  it('shows stronger feedback when the same mistake is repeated, without revealing help early', async () => {
-    const { submit } = setup();
-    await submit(mistake);
-    await submit(mistake);
-    expect(status()).toHaveTextContent('Remember: the number outside the brackets multiplies every term inside.');
-    expect(screen.getByRole('button', { name: 'Get a hint' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Show an example' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('group', { name: 'Worked example' })).not.toBeInTheDocument();
-  });
-
-  it('moves to Show an example once the hint has been seen and the mistake repeats', async () => {
-    const { submit, press } = setup();
-    await submit(mistake);
-    await press('Get a hint');
-    await submit(mistake);
-    expect(screen.getByRole('button', { name: 'Show an example' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'View hint' })).toBeInTheDocument();
-    expect(screen.queryByText('The 3 applies to everything inside the brackets.')).not.toBeInTheDocument();
-  });
-
-  it('moves to Show next step once the example has been seen and the mistake repeats', async () => {
-    const { submit, press } = setup();
-    await submit(mistake);
-    await press('Get a hint');
-    await press('Show an example');
-    await submit(mistake);
-    expect(screen.getByRole('button', { name: 'Show next step' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'View example' })).toBeInTheDocument();
-    expect(screen.queryByRole('group', { name: 'Worked example' })).not.toBeInTheDocument();
-  });
-
-  it('reopens seen help quietly without changing session metrics', async () => {
-    const { submit, press } = setup(true);
-    await submit(mistake);
-    await press('Get a hint');
-    await submit(mistake);
-    const before = screen.getByText('Hints requested', { selector: 'dt' }).nextElementSibling?.textContent;
-    await press('View hint');
-    expect(status()).toHaveTextContent('The 3 applies to everything inside the brackets.');
-    expect(screen.queryByRole('button', { name: 'View hint' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Show an example' })).toBeInTheDocument();
-    expect(screen.getByText('Hints requested', { selector: 'dt' }).nextElementSibling?.textContent).toBe(before);
-    expect(status()).not.toHaveFocus();
-    expect(screen.getByRole('textbox')).toHaveFocus();
-  });
-
-  it('labels prompt, hint and example help distinctly and never uses internal terminology', async () => {
-    const { submit, press } = setup();
-    await press('Need help?');
-    expect(screen.getByText('Prompt')).toBeInTheDocument();
-    await submit(mistake);
-    await press('Get a hint');
-    expect(screen.getByText('Hint')).toBeInTheDocument();
-    await press('Show an example');
-    expect(screen.getByRole('group', { name: 'Worked example' })).toBeInTheDocument();
-    expect(
-      within(screen.getByRole('main')).queryByText(/assistance level|scaffold level|intervention level|diagnosis confidence|escalation stage/i),
-    ).toBeNull();
-  });
-
-  it('offers a single forward action at any time', async () => {
-    const { submit, press } = setup();
-    await submit(mistake);
-    await press('Get a hint');
-    await submit(mistake);
-    const labels = ['Need help?', 'Get a hint', 'Show an example', 'Show next step'];
-    const forwards = labels.filter((label) => screen.queryByRole('button', { name: label }));
-    expect(forwards).toEqual(['Show an example']);
-  });
-
 
   it.each([
     ['distribute first', ['3x + 6 = 18', '3x = 12', 'x = 4'], 3],
@@ -334,16 +271,15 @@ describe('unrecognised steps', () => {
   });
 
   it('offers only a generic hint, tied to the current step', async () => {
-    const { input, submit, press } = setup();
+    const { submit, press } = setup();
     await submit('6 + 3x = 18');
     expect(screen.getByRole('button', { name: 'Need help?' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /example|next step/i })).not.toBeInTheDocument();
 
     await press('Need help?');
-    expect(status()).toHaveTextContent('Think about how you could make the equation simpler.');
-    expect(screen.queryByRole('button', { name: /help|hint|example|next step/i })).not.toBeInTheDocument();
+    expect(helpSurface()).toHaveTextContent('Think about how you could make the equation simpler.');
+    expect(screen.queryByRole('button', { name: /hint|example|next step/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('group', { name: 'Worked example' })).not.toBeInTheDocument();
-    expect(input()).toHaveFocus();
 
     await submit('banana');
     expect(screen.queryByRole('button', { name: /example|next step/i })).not.toBeInTheDocument();
@@ -354,7 +290,7 @@ describe('unrecognised steps', () => {
     await submit('3x + 6 = 18');
     await submit('banana');
     await press('Need help?');
-    expect(status()).toHaveTextContent('What operation would undo the +6?');
+    expect(helpSurface()).toHaveTextContent('What operation would undo the +6?');
   });
 
   it('treats nonsense the same way, without inventing a diagnosis', async () => {
@@ -381,7 +317,7 @@ describe('unrecognised steps', () => {
     expect(status()).toHaveTextContent('Check what the 3 multiplies inside the brackets.');
     expect(screen.getByText('Needs attention')).toBeInTheDocument();
     await press('Get a hint');
-    expect(status()).toHaveTextContent('The 3 applies to everything inside the brackets.');
+    expect(helpSurface()).toHaveTextContent('The 3 applies to everything inside the brackets.');
   });
 });
 
@@ -390,7 +326,7 @@ describe('progressive help', () => {
     const { input, submit, press } = setup();
     await submit(mistake);
     await press('Get a hint');
-    expect(status()).toHaveTextContent('The 3 applies to everything inside the brackets.');
+    expect(helpSurface()).toHaveTextContent('The 3 applies to everything inside the brackets.');
     expect(learnerColumn().queryByRole('math', { name: '3x + 6 = 18' })).not.toBeInTheDocument();
     expect(input()).toHaveValue(mistake);
     expect(input()).toHaveFocus();

@@ -12,7 +12,13 @@ const setup = (showInspector = false) => {
     await user.type(input(), value);
     await user.click(screen.getByRole('button', { name: 'Check step' }));
   };
-  const press = (name: string) => user.click(screen.getByRole('button', { name }));
+  const press = async (name: string) => {
+    if (/^(Get a hint|Show an example|Show next step)$/.test(name) && !screen.queryByRole('button', { name })) {
+      const launcher = screen.getByRole('button', { name: /^(Need help\?|Help)$/ });
+      if (launcher.getAttribute('aria-expanded') === 'false') await user.click(launcher);
+    }
+    await user.click(screen.getByRole('button', { name }));
+  };
   return { user, input, submit, press };
 };
 
@@ -20,6 +26,7 @@ const sequence = () => screen.getByRole('list', { name: 'Working so far' });
 const lines = () => within(sequence()).getAllByRole('listitem');
 const equations = () => lines().map((line) => within(line).getByRole('math').getAttribute('aria-label'));
 const before = (a: Element, b: Element) => Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+const helpSurface = () => screen.getByRole('region', { name: /^(Help|Prompt|Hint|Example)$/ });
 const status = () => screen.getByRole('status');
 
 describe('working sequence', () => {
@@ -99,25 +106,24 @@ describe('working sequence', () => {
     expect(before(input(), screen.getByRole('button', { name: 'Check step' }))).toBe(true);
   });
 
-  it('keeps help attached to the attempt it concerns', async () => {
+  it('keeps help below the input, after the working it concerns', async () => {
     const { submit, press, input } = setup();
     await submit('3x + 2 = 18');
     await press('Get a hint');
-    expect(status()).toHaveTextContent('Hint');
-    expect(status()).toHaveTextContent('The 3 applies to everything inside the brackets.');
+    expect(helpSurface()).toHaveTextContent('The 3 applies to everything inside the brackets.');
     expect(before(lines().at(-1)!, status())).toBe(true);
     expect(before(status(), input())).toBe(true);
+    expect(before(input(), helpSurface())).toBe(true);
   });
 
   it('names generic help a Prompt and misconception help a Hint', async () => {
     const { submit, press } = setup();
     await press('Need help?');
-    expect(status()).toHaveTextContent('Prompt');
-    expect(status()).not.toHaveTextContent('Hint');
+    expect(screen.getByRole('region', { name: 'Prompt' })).toBeInTheDocument();
     await submit('3x + 2 = 18');
     await press('Get a hint');
-    expect(status()).toHaveTextContent('Hint');
-    expect(status()).not.toHaveTextContent('Prompt');
+    expect(screen.getByRole('region', { name: 'Hint' })).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Prompt' })).not.toBeInTheDocument();
   });
 
   it('keeps the whole working, in order, ahead of the completion panel', async () => {
@@ -147,7 +153,6 @@ describe('working sequence accessibility', () => {
     expect(screen.getByRole('button', { name: 'Check step' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Need help?' })).toBeInTheDocument();
     await submit('3x + 2 = 18');
-    expect(screen.getByRole('button', { name: 'Get a hint' })).toBeInTheDocument();
     await press('Get a hint');
     expect(screen.getByRole('button', { name: 'Show an example' })).toBeInTheDocument();
   });

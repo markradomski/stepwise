@@ -1,5 +1,5 @@
 import type { FeedbackKind } from '../../components/FeedbackMessage/FeedbackMessage';
-import type { WorkingStepStatus } from '../../components/WorkingStep/WorkingStep';
+import type { WorkingStepSource, WorkingStepStatus } from '../../components/WorkingStep/WorkingStep';
 import type { LearningState } from '../../lib/learningState';
 
 export type DemoState = {
@@ -8,13 +8,21 @@ export type DemoState = {
   shortTitle: string;
   progress: { currentQuestion: number; totalQuestions: number };
   question: { instruction: string; expression: string };
-  workingSteps: Array<{ expression: string; status: WorkingStepStatus }>;
+  workingSteps: Array<{ expression: string; status: WorkingStepStatus; source?: WorkingStepSource }>;
   input?: { value: string; state: 'empty' | 'focused' };
   feedback?: { kind: FeedbackKind; title?: string; message: string };
   completion?: { title: string; message: string; actionLabel: string };
   primaryAction?: { label: string; disabled?: boolean };
-  secondaryAction?: { label: string };
-  reopenAction?: { label: string };
+  help?: {
+    launcherLabel: string;
+    surface?: {
+      heading: 'Help' | 'Prompt' | 'Hint' | 'Example';
+      message?: string;
+      example?: { before: string; after: string; explanation: string };
+      forward?: string;
+      prior?: string;
+    };
+  };
   completed?: boolean;
   inspector?: LearningState;
 };
@@ -37,8 +45,7 @@ const partialDistributionState: DemoState = {
   },
   input: { value: '3x + 2 = 18', state: 'empty' },
   primaryAction: { label: 'Check step' },
-  secondaryAction: { label: 'Show an example' },
-  reopenAction: { label: 'View hint' },
+  help: { launcherLabel: 'Help' },
 };
 
 export const demoStates: DemoState[] = [
@@ -50,6 +57,7 @@ export const demoStates: DemoState[] = [
     workingSteps: [],
     input: { value: '', state: 'empty' },
     primaryAction: { label: 'Check step' },
+    help: { launcherLabel: 'Need help?' },
   },
   {
     ...baseState,
@@ -73,7 +81,7 @@ export const demoStates: DemoState[] = [
     },
     input: { value: '3x + 2 = 18', state: 'empty' },
     primaryAction: { label: 'Check step' },
-    secondaryAction: { label: 'Get a hint' },
+    help: { launcherLabel: 'Need help?' },
   },
   partialDistributionState,
   {
@@ -100,17 +108,91 @@ export const demoStates: DemoState[] = [
       attempt: 2,
       misconception: 'Partial distribution',
       repeatedMisconceptionCount: 2,
-      hintLevel: { current: 2, max: 3 },
+      hintLevel: { current: 0, max: 3 },
       masteryEstimate: 0.61,
-      intervention: 'Concept reminder',
+      intervention: 'None',
+      assistance: {
+        source: 'Misconception',
+        currentSupport: 'None',
+        forwardAction: 'Show an example',
+        promptSeen: 'No',
+        hintSeen: 'Yes',
+        exampleSeen: 'No',
+        nextStepSeen: 'No',
+        repeatedDifficulty: 2,
+      },
       exposure: {
         mastery: 'hidden',
         misconceptionLabel: 'hidden',
         nextSolutionStep: 'hidden',
-        hint: 'visible',
+        hint: 'hidden',
         workedExample: 'available',
       },
     },
+  },
+  {
+    ...baseState,
+    id: '07',
+    shortTitle: 'Prompt open',
+    title: 'Help open with a prompt',
+    workingSteps: [],
+    input: { value: '', state: 'empty' },
+    primaryAction: { label: 'Check step' },
+    help: {
+      launcherLabel: 'Help',
+      surface: { heading: 'Prompt', message: 'Think about how you could make the equation simpler.' },
+    },
+  },
+  {
+    ...baseState,
+    id: '08',
+    shortTitle: 'Hint open',
+    title: 'Help open with a hint',
+    workingSteps: [{ expression: '3x + 2 = 18', status: 'incorrect' }],
+    feedback: partialDistributionState.feedback,
+    input: { value: '3x + 2 = 18', state: 'empty' },
+    primaryAction: { label: 'Check step' },
+    help: {
+      launcherLabel: 'Help',
+      surface: {
+        heading: 'Hint',
+        message: 'The 3 applies to everything inside the brackets.',
+        forward: 'Show an example',
+      },
+    },
+  },
+  {
+    ...baseState,
+    id: '09',
+    shortTitle: 'Example open',
+    title: 'Help open with an example',
+    workingSteps: [{ expression: '3x + 2 = 18', status: 'incorrect' }],
+    feedback: partialDistributionState.feedback,
+    input: { value: '3x + 2 = 18', state: 'empty' },
+    primaryAction: { label: 'Check step' },
+    help: {
+      launcherLabel: 'Help',
+      surface: {
+        heading: 'Example',
+        example: {
+          before: '2(y + 4)',
+          after: '2y + 8',
+          explanation: 'The number outside the brackets multiplies each term inside.',
+        },
+        forward: 'Show next step',
+        prior: 'View hint',
+      },
+    },
+  },
+  {
+    ...baseState,
+    id: '10',
+    shortTitle: 'Suggested step',
+    title: 'Suggested next step in the working',
+    workingSteps: [{ expression: '3x + 6 = 18', status: 'accepted', source: 'system' }],
+    input: { value: '', state: 'focused' },
+    primaryAction: { label: 'Check step' },
+    help: { launcherLabel: 'Need help?' },
   },
 ];
 

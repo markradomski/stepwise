@@ -2,15 +2,21 @@ import { useId } from 'react';
 import { MathExpression } from '../MathExpression/MathExpression';
 import styles from './WorkedExample.module.css';
 
-type Props = { before: string; after: string; explanation: string };
+type Props = { before: string; after: string; explanation: string; embedded?: boolean };
 
-export function WorkedExample({ before, after, explanation }: Props) {
+export function WorkedExample({ before, after, explanation, embedded }: Props) {
   const headingId = useId();
   return (
-    <div role="group" aria-labelledby={headingId} className={styles.example}>
-      <p id={headingId} className="overline">
-        Worked example
-      </p>
+    <div
+      role="group"
+      className={`${styles.example} ${embedded ? styles.embedded : ''}`}
+      {...(embedded ? { 'aria-label': 'Worked example' } : { 'aria-labelledby': headingId })}
+    >
+      {!embedded && (
+        <p id={headingId} className="overline">
+          Worked example
+        </p>
+      )}
       <p className={styles.working}>
         <MathExpression expression={before} size="small" />
         <span className="srOnly">becomes</span>

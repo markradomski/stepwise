@@ -11,7 +11,13 @@ const setup = (showInspector = false) => {
     await user.type(input(), value);
     await user.click(screen.getByRole('button', { name: 'Check step' }));
   };
-  const press = (name: string) => user.click(screen.getByRole('button', { name }));
+  const press = async (name: string) => {
+    if (/^(Get a hint|Show an example|Show next step)$/.test(name) && !screen.queryByRole('button', { name })) {
+      const launcher = screen.getByRole('button', { name: /^(Need help\?|Help)$/ });
+      if (launcher.getAttribute('aria-expanded') === 'false') await user.click(launcher);
+    }
+    await user.click(screen.getByRole('button', { name }));
+  };
   const solve = async (...steps: string[]) => {
     for (const step of steps) await submit(step);
   };
@@ -19,6 +25,7 @@ const setup = (showInspector = false) => {
 };
 
 const heading = () => screen.getByRole('heading', { level: 2, name: /^Question \d of 3/ });
+const helpSurface = () => screen.getByRole('region', { name: /^(Help|Prompt|Hint|Example)$/ });
 const status = () => screen.getByRole('status');
 const guide = () => screen.getByText('How Stepwise works').closest('details')!;
 const metric = (label: string) => screen.getByText(label, { selector: 'dt' }).nextElementSibling;
@@ -154,7 +161,7 @@ describe('help across questions', () => {
     await solve('3x + 2 = 18');
     expect(status()).toHaveTextContent('Check what the 3 multiplies inside the brackets.');
     await press('Get a hint');
-    expect(status()).toHaveTextContent('The 3 applies to everything inside the brackets.');
+    expect(helpSurface()).toHaveTextContent('The 3 applies to everything inside the brackets.');
   });
 
   it('gives Question 2 its own feedback, hint, example and next step', async () => {
@@ -164,7 +171,7 @@ describe('help across questions', () => {
     await solve('2x = 22');
     expect(status()).toHaveTextContent('Check what happens when you undo the +5.');
     await press('Get a hint');
-    expect(status()).toHaveTextContent('What operation undoes +5?');
+    expect(helpSurface()).toHaveTextContent('What operation undoes +5?');
     await press('Show an example');
     const example = within(screen.getByRole('group', { name: 'Worked example' }));
     expect(example.getByRole('math', { name: 'y + 3 = 8' })).toBeInTheDocument();
@@ -185,7 +192,7 @@ describe('help across questions', () => {
     await solve('4x - 1 = 20');
     expect(status()).toHaveTextContent('Check what the 4 multiplies inside the brackets.');
     await press('Get a hint');
-    expect(status()).toHaveTextContent('The 4 applies to everything inside the brackets.');
+    expect(helpSurface()).toHaveTextContent('The 4 applies to everything inside the brackets.');
     await solve('4x - 1 = 20');
     await press('Show an example');
     const example = within(screen.getByRole('group', { name: 'Worked example' }));

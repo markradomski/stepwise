@@ -11,7 +11,13 @@ const setup = (showInspector = false) => {
     await user.type(input(), value);
     await user.click(screen.getByRole('button', { name: 'Check step' }));
   };
-  const press = (name: string) => user.click(screen.getByRole('button', { name }));
+  const press = async (name: string) => {
+    if (/^(Get a hint|Show an example|Show next step)$/.test(name) && !screen.queryByRole('button', { name })) {
+      const launcher = screen.getByRole('button', { name: /^(Need help\?|Help)$/ });
+      if (launcher.getAttribute('aria-expanded') === 'false') await user.click(launcher);
+    }
+    await user.click(screen.getByRole('button', { name }));
+  };
   const solve = async (...steps: string[]) => {
     for (const step of steps) await submit(step);
   };
