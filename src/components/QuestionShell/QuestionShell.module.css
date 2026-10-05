@@ -1,0 +1,43 @@
+.shell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-7);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.mark {
+  fill: var(--color-text);
+}
+
+.wordmark {
+  font: var(--font-heading-m);
+  letter-spacing: -0.01em;
+}
+
+.question {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+@media (max-width: 40rem) {
+  .shell {
+    gap: 1.75rem;
+  }
+
+  .question {
+    gap: var(--space-2);
+  }
+}

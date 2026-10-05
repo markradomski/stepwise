@@ -1,0 +1,22 @@
+.inspector {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  min-height: 100%;
+  padding: var(--space-6) var(--space-5) var(--space-5);
+  border-left: 1px solid var(--color-border);
+  background: var(--color-surface-sunken);
+}
+
+.title {
+  font: var(--font-heading-m);
+}
+
+.note {
+  font: var(--font-helper);
+  color: var(--color-text-muted);
+}
+
+.inspector h3 {
+  margin-bottom: var(--space-2);
+}

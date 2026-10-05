@@ -8,14 +8,52 @@ body {
   margin: 0;
   background: var(--color-page);
   color: var(--color-text);
-  font-family: var(--font-family);
-  font-size: var(--font-size-md);
-  line-height: var(--line-height);
+  font: var(--font-body);
+  -webkit-text-size-adjust: 100%;
+}
+
+h1,
+h2,
+h3,
+p,
+ol,
+dl,
+dd {
+  margin: 0;
+}
+
+button,
+input {
+  font: inherit;
+  color: inherit;
+}
+
+var {
+  font-style: italic;
 }
 
 :focus-visible {
   outline: 3px solid var(--color-focus);
   outline-offset: 2px;
+}
+
+.overline {
+  font: var(--font-overline);
+  letter-spacing: 0.057em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {

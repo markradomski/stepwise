@@ -1,0 +1,45 @@
+.step {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  --border-width: 1px;
+  padding: calc(var(--space-4) - var(--border-width)) calc(var(--space-5) - var(--border-width));
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  list-style: none;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.status {
+  font: var(--font-label);
+}
+
+.accepted .status {
+  color: var(--color-positive);
+}
+
+.current {
+  --border-width: 2px;
+  border-color: var(--color-border-strong);
+}
+
+.current .status {
+  color: var(--color-text-muted);
+}
+
+.incorrect {
+  --border-width: 2px;
+  border-color: var(--color-caution);
+  background: var(--color-caution-bg);
+}
+
+.incorrect .status {
+  color: var(--color-caution);
+}

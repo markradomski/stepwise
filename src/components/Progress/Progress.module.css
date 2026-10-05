@@ -1,0 +1,41 @@
+.progress {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font: var(--font-label);
+  white-space: nowrap;
+}
+
+.dots {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.dot {
+  display: grid;
+  place-items: center;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+}
+
+.done {
+  background: var(--color-text);
+}
+
+.current {
+  border: 2px solid var(--color-text);
+}
+
+.current::after {
+  content: '';
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 50%;
+  background: var(--color-text);
+}
+
+.upcoming {
+  border: 1.5px solid var(--color-text-muted);
+}

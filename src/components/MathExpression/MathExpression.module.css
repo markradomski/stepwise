@@ -1,0 +1,18 @@
+.math {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.display {
+  font: var(--font-math-display);
+}
+
+.step {
+  font: var(--font-math-step);
+}
+
+@media (max-width: 40rem) {
+  .display {
+    font: var(--font-math-large);
+  }
+}

@@ -1,0 +1,42 @@
+.icon {
+  flex: none;
+  --shape: none;
+  --glyph: var(--color-action-text);
+}
+
+.check {
+  --shape: var(--color-positive);
+}
+
+.attention {
+  --shape: var(--color-caution);
+}
+
+.hint {
+  --shape: var(--color-info);
+}
+
+.note {
+  --glyph: var(--color-text-muted);
+}
+
+.shape {
+  fill: var(--shape);
+}
+
+.note .shape {
+  stroke: var(--glyph);
+  stroke-width: 2;
+}
+
+.stroke {
+  fill: none;
+  stroke: var(--glyph);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.dot {
+  fill: var(--glyph);
+}

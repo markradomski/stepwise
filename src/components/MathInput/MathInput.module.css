@@ -1,0 +1,57 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.label {
+  font: var(--font-label);
+}
+
+.field {
+  display: flex;
+  align-items: stretch;
+  height: 4.5rem;
+  overflow: hidden;
+  border: 2px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.field:focus-within {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.stepNumber {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 4rem;
+  background: var(--color-surface-sunken);
+  color: var(--color-text-muted);
+  font: var(--font-label);
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  padding: 0 var(--space-5);
+  border: 0;
+  background: transparent;
+  font: var(--font-math-step);
+}
+
+.input:focus {
+  outline: none;
+}
+
+.input::placeholder {
+  color: var(--color-text-muted);
+  opacity: 1;
+}
+
+.helper {
+  font: var(--font-helper);
+  color: var(--color-text-muted);
+}
