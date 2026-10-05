@@ -1,6 +1,6 @@
 # Explanation evaluation
 
-**Status: live model evaluation pending.** No API credentials were available when this was written, so nothing
+**Status: live model evaluation blocked — no credentials available.** Phase 12 could not run the real model, so nothing
 below is a claim about model quality. The deterministic baseline is real; every model section is marked pending.
 
 ## 1. Corpus
@@ -31,23 +31,24 @@ Valid schema: 11/11
 Boundary violations: 0
 Grounded: 11/11
 Pedagogy (heuristic): 11/11
-Progressive-scaffold violations (heuristic): 1
+Progressive-scaffold violations (heuristic): 0
 Restates the hint (heuristic): 0
 Concise (≤220 chars): 11/11
 Authorship checks: 1/1
 Unavailable handled: 1/1
-
-Notes:
-  q2-misconception-inverse-operation: heuristic: names a later step (2x = 12)
 ```
 
-Finding: the deterministic explanation for the Q2 inverse-operation misconception states the resulting
-`2x = 12`, which is the next step. The heuristic flags it as a possible progressive-scaffold issue. It is not
-changed here; it is recorded for a later decision.
+Phase 11 found one progressive-scaffold issue: the Q2 inverse-operation explanation stated the next equation
+(`2x = 12`). Phase 12 audited every deterministic misconception mapping against the question's transition graph
+and removed later results from them: the three inverse-operation explanations no longer state the next equation,
+the three arithmetic explanations no longer state the answer, and the partial-distribution explanations describe
+what the number multiplies instead of the expanded result. Accepted-step and suggested-step explanations still
+state the step they explain, because that equation is part of the supplied state. A test now fails if any
+misconception, hint or example explanation names a later equation. The heuristic reports 0 violations.
 
 ## 4. Model tested
 
-None yet. Run `npm run eval:explanations:llm` with `LLM_API_KEY` (and optionally `LLM_MODEL`) set.
+None. Live evaluation blocked (no `LLM_API_KEY`). Run `npm run eval:explanations:llm` with `LLM_API_KEY` (and optionally `LLM_MODEL`) set.
 
 ## 5. Prompt version
 
@@ -55,14 +56,14 @@ None yet. Run `npm run eval:explanations:llm` with `LLM_API_KEY` (and optionally
 
 ## 6–10. Automated results, human review, latency, failure patterns, prompt changes
 
-Pending live evaluation. The runner already records schema, boundary, grounding (heuristic), authorship,
+Blocked, pending credentials. No human review has been done, no prompt V2 exists and none is justified. The runner already records schema, boundary, grounding (heuristic), authorship,
 future-step leakage (heuristic), length, restatement (heuristic), latency (average and median), token counts
 and prompt version per case. The model's own results are saved to `evaluation-output/latest.json` (ignored).
 A second prompt version is created only if repeated failures justify it; V1 is never edited.
 
 ## 11. Routing policy
 
-Provisional: `llm-first` (`explanationRoutingPolicy.ts`), with the deterministic provider as fallback. This is
+Provisional and unchanged: `llm-first` (`explanationRoutingPolicy.ts`), with the deterministic provider as fallback. This is
 the pre-existing behaviour and is not evidence-based. A hybrid policy would be a change to the per-target
 table in that file, backed by the results above.
 

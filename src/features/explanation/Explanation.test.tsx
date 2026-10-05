@@ -54,7 +54,7 @@ describe('explain this', () => {
     const surface = within(region()!);
     expect(surface.getByRole('heading', { name: 'Explanation' })).toBeInTheDocument();
     expect(surface.getByText('Why that step needs another look')).toBeInTheDocument();
-    expect(surface.getByText(/the 3 multiplies x and 2, so expanding gives 3x \+ 6/)).toBeInTheDocument();
+    expect(surface.getByText(/the 3 multiplies x and it also multiplies 2/)).toBeInTheDocument();
     expect(screen.getAllByRole('region', { name: 'Explanation' })).toHaveLength(1);
     const feedback = screen.getByText('Check what the 3 multiplies inside the brackets.');
     expect(feedback.compareDocumentPosition(region()!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();

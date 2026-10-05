@@ -14,11 +14,11 @@ export const explanationContent: Record<string, QuestionExplanations> = {
   'linear-3-bracket': {
     misconceptions: {
       [misconceptionKey('3(x + 2) = 18', 'PARTIAL_DISTRIBUTION')]:
-        'The 3 needs to multiply both terms inside the brackets. In 3(x + 2), the 3 multiplies x and 2, so expanding gives 3x + 6.',
+        'The 3 needs to multiply both terms inside the brackets. In 3(x + 2), the 3 multiplies x and it also multiplies 2.',
       [misconceptionKey('3x + 6 = 18', 'INCORRECT_INVERSE_OPERATION')]:
-        'Undoing + 6 means taking 6 away from both sides, which keeps them equal. That turns 3x + 6 = 18 into 3x = 12.',
+        'Undoing + 6 means taking 6 away from both sides, not adding it, so both sides stay equal.',
       [misconceptionKey('3x = 12', 'ARITHMETIC_ERROR')]:
-        'Dividing both sides by 3 leaves x on its own: x = 12 ÷ 3. Since 3 × 4 = 12, that division gives 4.',
+        'Dividing both sides by 3 leaves x on its own, so x is 12 divided by 3. Multiplying that result back by 3 should return 12.',
     },
     transitions: {
       [transitionKey('3(x + 2) = 18', '3x + 6 = 18')]:
@@ -36,9 +36,9 @@ export const explanationContent: Record<string, QuestionExplanations> = {
   'linear-two-step': {
     misconceptions: {
       [misconceptionKey('2x + 5 = 17', 'INCORRECT_INVERSE_OPERATION')]:
-        'Undoing + 5 means taking 5 away from both sides, which keeps them equal. That turns 2x + 5 = 17 into 2x = 12.',
+        'To undo + 5, use the inverse operation: subtracting 5 from both sides keeps the equation balanced.',
       [misconceptionKey('2x = 12', 'ARITHMETIC_ERROR')]:
-        'Dividing both sides by 2 leaves x on its own: x = 12 ÷ 2. Since 2 × 6 = 12, that division gives 6.',
+        'Dividing both sides by 2 leaves x on its own, so x is 12 divided by 2. Multiplying that result back by 2 should return 12.',
     },
     transitions: {
       [transitionKey('2x + 5 = 17', '2x = 12')]:
@@ -50,11 +50,11 @@ export const explanationContent: Record<string, QuestionExplanations> = {
   'linear-4-bracket': {
     misconceptions: {
       [misconceptionKey('4(x - 1) = 20', 'PARTIAL_DISTRIBUTION')]:
-        'The 4 needs to multiply both terms inside the brackets. In 4(x − 1), the 4 multiplies x and −1, so expanding gives 4x − 4.',
+        'The 4 needs to multiply both terms inside the brackets. In 4(x − 1), the 4 multiplies x and it also multiplies −1.',
       [misconceptionKey('4x - 4 = 20', 'INCORRECT_INVERSE_OPERATION')]:
-        'Undoing − 4 means adding 4 to both sides, which keeps them equal. That turns 4x − 4 = 20 into 4x = 24.',
+        'To undo − 4, use the inverse operation: adding 4 to both sides keeps the equation balanced.',
       [misconceptionKey('4x = 24', 'ARITHMETIC_ERROR')]:
-        'Dividing both sides by 4 leaves x on its own: x = 24 ÷ 4. Since 4 × 6 = 24, that division gives 6.',
+        'Dividing both sides by 4 leaves x on its own, so x is 24 divided by 4. Multiplying that result back by 4 should return 24.',
     },
     transitions: {
       [transitionKey('4(x - 1) = 20', '4x - 4 = 20')]:

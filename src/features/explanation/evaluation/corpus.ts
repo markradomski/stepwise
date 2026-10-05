@@ -31,7 +31,7 @@ const balanced = [/both sides/i, /equal|balanc/i];
 export const corpus: EvaluationCase[] = [
   make('q1-misconception-partial-distribution', 'Q1 partial distribution', {
     kind: 'misconception', questionId: q1.id, expression: '3(x + 2) = 18', misconceptionId: 'PARTIAL_DISTRIBUTION', learnerExpression: '3x + 2 = 18',
-  }, { supported: true, concepts: [[/multipl/i], [/both|every|each/i], [/bracket/i]], mentions: ['3(x + 2)', '3x + 6'], forbidden: ['x = 4'] }),
+  }, { supported: true, concepts: [[/multipl/i], [/both|every|each/i], [/bracket/i]], mentions: ['3(x + 2)'], forbidden: ['x = 4', '3x + 6'] }),
   make('q1-accepted-divide', 'Q1 accepted divide-both-sides step', {
     kind: 'accepted-step', questionId: q1.id, previousExpression: '3(x + 2) = 18', submittedExpression: 'x + 2 = 6', canonicalExpression: 'x + 2 = 6',
   }, { supported: true, concepts: [[/divid/i], balanced], mentions: ['x + 2 = 6'], forbidden: ['x = 4'] }),
@@ -40,7 +40,7 @@ export const corpus: EvaluationCase[] = [
   }, { supported: true, concepts: [[/divid/i], balanced], mentions: ['x + 2 = 6'], forbidden: ['x = 4'] }),
   make('q2-misconception-inverse-operation', 'Q2 inverse operation', {
     kind: 'misconception', questionId: q2.id, expression: '2x + 5 = 17', misconceptionId: 'INCORRECT_INVERSE_OPERATION', learnerExpression: '2x = 22',
-  }, { supported: true, concepts: [[/take|subtract|undo/i], [/both sides/i]], mentions: ['2x + 5 = 17', '2x = 12'], forbidden: ['x = 6'] }),
+  }, { supported: true, concepts: [[/take|subtract|undo/i], [/both sides/i]], mentions: ['2x + 5 = 17', '+ 5'], forbidden: ['x = 6', '2x = 12'] }),
   make('q2-accepted-subtraction', 'Q2 accepted subtraction step', {
     kind: 'accepted-step', questionId: q2.id, previousExpression: '2x + 5 = 17', submittedExpression: '2x = 12', canonicalExpression: '2x = 12',
   }, { supported: true, concepts: [[/subtract/i], balanced], mentions: ['2x = 12'], forbidden: ['x = 6'] }),
@@ -58,7 +58,7 @@ export const corpus: EvaluationCase[] = [
   }, { supported: true, concepts: [[/divid/i], [/both sides/i]], mentions: ['x = 6', '2x = 12'], forbidden: [] }),
   make('q3-misconception-partial-distribution', 'Q3 partial distribution', {
     kind: 'misconception', questionId: q3.id, expression: '4(x - 1) = 20', misconceptionId: 'PARTIAL_DISTRIBUTION', learnerExpression: '4x - 1 = 20',
-  }, { supported: true, concepts: [[/multipl/i], [/both|every|each/i], [/bracket/i]], mentions: ['4(x - 1)', '4x - 4'], forbidden: ['x = 6'] }),
+  }, { supported: true, concepts: [[/multipl/i], [/both|every|each/i], [/bracket/i]], mentions: ['4(x - 1)'], forbidden: ['x = 6', '4x - 4'] }),
   make('q3-accepted-distribution', 'Q3 accepted distribution step', {
     kind: 'accepted-step', questionId: q3.id, previousExpression: '4(x - 1) = 20', submittedExpression: '4x - 4 = 20', canonicalExpression: '4x - 4 = 20',
   }, { supported: true, concepts: [[/multipl/i], [/both|each|every/i]], mentions: ['4x - 4 = 20'], forbidden: ['x = 6'] }),

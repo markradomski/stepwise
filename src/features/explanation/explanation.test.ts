@@ -135,7 +135,7 @@ describe('deterministic explanation provider', () => {
   it('explains partial distribution without blame', async () => {
     const result = await ok(misconceptionTarget);
     expect(result).toMatchObject({ ok: true, value: { title: 'Why that step needs another look' } });
-    expect(result.ok && result.value.body).toContain('the 3 multiplies x and 2, so expanding gives 3x + 6');
+    expect(result.ok && result.value.body).toContain('the 3 multiplies x and it also multiplies 2');
     expect(result.ok && result.value.body).not.toMatch(/you forgot|you should|you made/i);
   });
 
@@ -147,7 +147,7 @@ describe('deterministic explanation provider', () => {
       misconceptionId: 'INCORRECT_INVERSE_OPERATION',
       learnerExpression: '2x = 22',
     }, q2);
-    expect(result.ok && result.value.body).toContain('Undoing + 5 means taking 5 away from both sides');
+    expect(result.ok && result.value.body).toContain('subtracting 5 from both sides keeps the equation balanced');
   });
 
   it('explains an arithmetic misconception where one exists', async () => {
@@ -158,7 +158,7 @@ describe('deterministic explanation provider', () => {
       misconceptionId: 'ARITHMETIC_ERROR',
       learnerExpression: 'x = 5',
     }, q2);
-    expect(result.ok && result.value.body).toContain('12 ÷ 2');
+    expect(result.ok && result.value.body).toContain('12 divided by 2');
   });
 
   it('explains an accepted step by the operation that kept it balanced', async () => {
@@ -207,5 +207,47 @@ describe('deterministic explanation provider', () => {
       if (outcome.status !== 'ok') continue;
       expect(Object.keys(outcome.value as object).sort()).toEqual(['body', 'title', 'version']);
     }
+  });
+});
+
+describe('deterministic explanations do not reveal later steps', () => {
+  const reachable = (question: (typeof practiceQuestions)[number], from: string): string[] => {
+    const seen = new Set<string>();
+    const walk = (expression: string) =>
+      (question.transitions[expression] ?? []).forEach((next) => {
+        if (!seen.has(next)) {
+          seen.add(next);
+          walk(next);
+        }
+      });
+    walk(from);
+    return [...seen];
+  };
+  const norm = (text: string) => text.replace(/−/g, '-').replace(/\s+/g, ' ');
+
+  const cases = practiceQuestions.flatMap((question) =>
+    question.knownMistakes.map((mistake) => ({ question, mistake, name: `${question.id} ${mistake.misconception}` })),
+  );
+
+  it.each(cases)('$name: misconception, hint and example explanations name no later equation', async ({ question, mistake }) => {
+    for (const kind of ['misconception', 'hint', 'example'] as const) {
+      const target = {
+        kind,
+        questionId: question.id,
+        expression: mistake.from,
+        misconceptionId: mistake.misconception,
+        learnerExpression: mistake.entered,
+      } as ExplanationTarget;
+      const outcome = await explain(buildExplanationRequest(target, question));
+      if (outcome.status !== 'ok') continue;
+      const body = norm(JSON.stringify(outcome.value));
+      for (const future of reachable(question, mistake.from)) expect(body).not.toContain(norm(future));
+    }
+  });
+
+  it('the Q2 inverse-operation explanation no longer states 2x = 12', async () => {
+    const outcome = await explain(buildExplanationRequest({ ...misconceptionTarget, questionId: q2.id, expression: '2x + 5 = 17', misconceptionId: 'INCORRECT_INVERSE_OPERATION', learnerExpression: '2x = 22' } as ExplanationTarget, q2));
+    expect(JSON.stringify(outcome)).not.toContain('2x = 12');
+    expect(JSON.stringify(outcome)).toContain('subtracting 5 from both sides');
   });
 });

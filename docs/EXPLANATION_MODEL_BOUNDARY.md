@@ -82,7 +82,8 @@ an explicit per-target table.
 
 ## 12. Live evaluation findings
 
-Not yet run. Active prompt: `explanation-prompt/1`.
+Not yet run: blocked, no credentials. Active prompt: `explanation-prompt/1`. The deterministic baseline was audited for
+future-step leakage in Phase 12 and now passes.
 
 ## 13. Known limitations
 
