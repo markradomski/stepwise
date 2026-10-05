@@ -1,6 +1,8 @@
 import { buildExplanationRequest } from '../buildExplanationRequest';
 import { practiceQuestions } from '../../practice/questions';
 import { buildExplanationPromptV1, outputSchema, PROMPT_VERSION } from './explanationPromptV1';
+import { buildExplanationPromptV2 } from './explanationPromptV2';
+import { ACTIVE_PROMPT_VERSION, promptBuilders } from './promptRegistry';
 
 const request = buildExplanationRequest(
   {
@@ -59,5 +61,30 @@ describe('buildExplanationPromptV1', () => {
   it('contains no mastery, session or unrelated application state', () => {
     expect(`${prompt.system}\n${prompt.user}`).not.toMatch(/mastery|session|history|inspector|hintRequests|attempt count/i);
     expect(prompt.user).not.toContain('explanation-request/1');
+  });
+});
+
+describe('prompt versions are separate and immutable', () => {
+  const v2 = buildExplanationPromptV2(request);
+
+  it('registers both versions, with V1 still active', () => {
+    expect(Object.keys(promptBuilders).sort()).toEqual(['explanation-prompt/1', 'explanation-prompt/2']);
+    expect(ACTIVE_PROMPT_VERSION).toBe('explanation-prompt/1');
+    expect(promptBuilders['explanation-prompt/1'](request).system).toBe(buildExplanationPromptV1(request).system);
+  });
+
+  it('V2 keeps every core restriction and adds the supplied-results rule', () => {
+    expect(v2.version).toBe('explanation-prompt/2');
+    expect(v2.system).toMatch(/do not judge whether anything is correct/i);
+    expect(v2.system).toMatch(/do not diagnose mistakes/i);
+    expect(v2.system).toMatch(/do not choose the next step/i);
+    expect(v2.system).toMatch(/only facts supplied by Stepwise/i);
+    expect(v2.system).toMatch(/structured result/i);
+    expect(v2.system).toMatch(/Never state a result that was not supplied/);
+    expect(buildExplanationPromptV1(request).system).not.toMatch(/Never state a result that was not supplied/);
+  });
+
+  it('presents the same data block in both versions', () => {
+    expect(v2.user).toBe(buildExplanationPromptV1(request).user);
   });
 });

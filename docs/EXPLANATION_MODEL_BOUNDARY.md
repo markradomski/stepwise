@@ -77,18 +77,22 @@ address locally, `CF-Connecting-IP` when deployed).
 
 ## 11. Routing policy
 
-Provisional `llm-first`; see `docs/EXPLANATION_EVALUATION.md`. Routing lives in `explanationRoutingPolicy.ts` as
-an explicit per-target table.
+Hybrid by target, chosen from reviewed live results: the model is tried first only for suggested-step explanations; every
+other target uses the deterministic provider directly. The deterministic provider is always the fallback. Model use is
+conditional by target. See `docs/EXPLANATION_EVALUATION.md`. Routing lives in `explanationRoutingPolicy.ts` as an explicit table.
 
 ## 12. Live evaluation findings
 
-Not yet run: blocked, no credentials. Active prompt: `explanation-prompt/1`. The deterministic baseline was audited for
-future-step leakage in Phase 12 and now passes.
+Run on 2026-10-06 against `claude-haiku-4-5-20251001`, prompt `explanation-prompt/1` (active): better than deterministic on 2 of 11
+cases (both suggested steps), same on 5, worse on 4; median latency about 2 s. Prompt `explanation-prompt/2` was evaluated and not
+adopted. The deterministic baseline was audited for future-step leakage and now passes. Reviewed by an AI assistant, pending human
+confirmation.
 
 ## 13. Known limitations
 
 - Rate limiting, dedupe and cache are in-memory and per instance.
-- Unresolved: real model quality, scaffold leakage and equivalent-input authorship are unmeasured.
+- Unresolved: the model sometimes puts future results in the unused `example` field, drops negative signs in bracket cases and ignores
+  equivalent learner forms; evidence for the suggested-step route rests on two cases.
 - Grounding and pedagogy checks are pattern-based and can miss subtle errors; boundary checks can
   over-flag unusual wording.
 - What can be explained is defined by the deterministic mapping, so the model cannot extend coverage.

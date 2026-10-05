@@ -1,0 +1,130 @@
+{
+  "_meta": {
+    "run": "v1",
+    "promptVersion": "explanation-prompt/1",
+    "model": "claude-haiku-4-5-20251001",
+    "date": "2026-10-06",
+    "reviewer": "Implementing assistant (an AI), not a human. Judgements are provisional until a human reviewer confirms them. Ratings apply to the displayed title and body; the example field is not displayed and is flagged under progressive-scaffold safety."
+  },
+  "q1-misconception-partial-distribution": {
+    "grounded": "pass",
+    "correct": "pass",
+    "pedagogy": 1,
+    "concise": 1,
+    "scaffoldSafe": "fail",
+    "authorship": "n/a",
+    "tone": "pass",
+    "value": "same",
+    "notes": "Body clear and correct, adds little over the deterministic copy. Example field states 3x and 6 (partial expansion); the example is not displayed."
+  },
+  "q1-accepted-divide": {
+    "grounded": "pass",
+    "correct": "pass",
+    "pedagogy": 1,
+    "concise": 2,
+    "scaffoldSafe": "pass",
+    "authorship": "n/a",
+    "tone": "pass",
+    "value": "same",
+    "notes": "Spells out both sides; a paraphrase of the deterministic explanation."
+  },
+  "q1-suggested-step": {
+    "grounded": "pass",
+    "correct": "pass",
+    "pedagogy": 2,
+    "concise": 1,
+    "scaffoldSafe": "pass",
+    "authorship": "n/a",
+    "tone": "pass",
+    "value": "better",
+    "notes": "Explains why: dividing undoes the multiplication by 3, then shows 18 ÷ 3. Somewhat longer (331 characters)."
+  },
+  "q2-misconception-inverse-operation": {
+    "grounded": "pass",
+    "correct": "pass",
+    "pedagogy": 1,
+    "concise": 2,
+    "scaffoldSafe": "fail",
+    "authorship": "n/a",
+    "tone": "pass",
+    "value": "same",
+    "notes": "Body is safe and equals the deterministic copy in substance. Example field states 2x = 12 (next step); not displayed."
+  },
+  "q2-accepted-subtraction": {
+    "grounded": "pass",
+    "correct": "pass",
+    "pedagogy": 1,
+    "concise": 2,
+    "scaffoldSafe": "pass",
+    "authorship": "n/a",
+    "tone": "pass",
+    "value": "same",
+    "notes": "Adds the per-side arithmetic; no material gain."
+  },
+  "q2-accepted-equivalent-form": {
+    "grounded": "fail",
+    "correct": "pass",
+    "pedagogy": 1,
+    "concise": 1,
+    "scaffoldSafe": "pass",
+    "authorship": "fail",
+    "tone": "pass",
+    "value": "worse",
+    "notes": "Never mentions the learner-entered 2x = 17 - 5. Does not claim they typed 2x = 12, but drops their form, which is the point of the case. The deterministic copy handles it."
+  },
+  "q2-accepted-division": {
+    "grounded": "pass",
+    "correct": "pass",
+    "pedagogy": 1,
+    "concise": 2,
+    "scaffoldSafe": "pass",
+    "authorship": "n/a",
+    "tone": "pass",
+    "value": "same",
+    "notes": "Paraphrase."
+  },
+  "q3-misconception-partial-distribution": {
+    "grounded": "pass",
+    "correct": "fail",
+    "pedagogy": 0,
+    "concise": 2,
+    "scaffoldSafe": "fail",
+    "authorship": "n/a",
+    "tone": "pass",
+    "value": "worse",
+    "notes": "Says the 4 multiplies \"the x and the 1\": the sign of -1 is dropped; the example says it \"gives 4\". Example also states 4x. Adds nothing over the hint."
+  },
+  "q3-accepted-distribution": {
+    "grounded": "pass",
+    "correct": "fail",
+    "pedagogy": 1,
+    "concise": 1,
+    "scaffoldSafe": "pass",
+    "authorship": "n/a",
+    "tone": "pass",
+    "value": "worse",
+    "notes": "Expansion is right, but says the operation is applied \"to the left side only\" while both sides stay equal, which is muddled reasoning. Identical in 3 reruns (the first run timed out once, not reproduced)."
+  },
+  "q3-suggested-step": {
+    "grounded": "pass",
+    "correct": "pass",
+    "pedagogy": 2,
+    "concise": 1,
+    "scaffoldSafe": "pass",
+    "authorship": "n/a",
+    "tone": "pass",
+    "value": "better",
+    "notes": "Explains why: undo the multiplication by 4, then 20 ÷ 4. Longer (247 characters)."
+  },
+  "q2-misconception-arithmetic": {
+    "grounded": "pass",
+    "correct": "pass",
+    "pedagogy": 0,
+    "concise": 2,
+    "scaffoldSafe": "fail",
+    "authorship": "n/a",
+    "tone": "pass",
+    "value": "worse",
+    "notes": "Body is generic (\"needs to be checked carefully\") and mentions the next step; explains nothing about the error. Example reveals the final answer 6; not displayed."
+  }
+}

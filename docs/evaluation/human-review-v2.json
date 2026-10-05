@@ -1,0 +1,130 @@
+{
+  "_meta": {
+    "run": "v2",
+    "promptVersion": "explanation-prompt/2",
+    "model": "claude-haiku-4-5-20251001",
+    "date": "2026-10-06",
+    "reviewer": "Implementing assistant (an AI), not a human. Judgements are provisional until a human reviewer confirms them. Ratings apply to the displayed title and body; the example field is not displayed and is flagged under progressive-scaffold safety."
+  },
+  "q1-misconception-partial-distribution": {
+    "grounded": "pass",
+    "correct": "pass",
+    "pedagogy": 1,
+    "concise": 2,
+    "scaffoldSafe": "fail",
+    "authorship": "n/a",
+    "tone": "pass",
+    "value": "worse",
+    "notes": "Body states \"This gives 3x + 6, not 3x + 2\": leaks the expansion and contrasts with the learner's attempt. A regression from V1."
+  },
+  "q1-accepted-divide": {
+    "grounded": "pass",
+    "correct": "pass",
+    "pedagogy": 1,
+    "concise": 2,
+    "scaffoldSafe": "pass",
+    "authorship": "n/a",
+    "tone": "pass",
+    "value": "same",
+    "notes": "Paraphrase."
+  },
+  "q1-suggested-step": {
+    "grounded": "pass",
+    "correct": "pass",
+    "pedagogy": 1,
+    "concise": 2,
+    "scaffoldSafe": "pass",
+    "authorship": "n/a",
+    "tone": "pass",
+    "value": "same",
+    "notes": "Shorter, but the \"why\" that made V1 better is gone."
+  },
+  "q2-misconception-inverse-operation": {
+    "grounded": "pass",
+    "correct": "pass",
+    "pedagogy": 1,
+    "concise": 2,
+    "scaffoldSafe": "pass",
+    "authorship": "n/a",
+    "tone": "pass",
+    "value": "same",
+    "notes": "Same body as V1; no example field, so no leak."
+  },
+  "q2-accepted-subtraction": {
+    "grounded": "pass",
+    "correct": "pass",
+    "pedagogy": 1,
+    "concise": 1,
+    "scaffoldSafe": "pass",
+    "authorship": "n/a",
+    "tone": "pass",
+    "value": "same",
+    "notes": "Paraphrase."
+  },
+  "q2-accepted-equivalent-form": {
+    "grounded": "fail",
+    "correct": "pass",
+    "pedagogy": 1,
+    "concise": 1,
+    "scaffoldSafe": "pass",
+    "authorship": "fail",
+    "tone": "pass",
+    "value": "worse",
+    "notes": "Still ignores the learner-entered 2x = 17 - 5."
+  },
+  "q2-accepted-division": {
+    "grounded": "pass",
+    "correct": "pass",
+    "pedagogy": 1,
+    "concise": 2,
+    "scaffoldSafe": "pass",
+    "authorship": "n/a",
+    "tone": "pass",
+    "value": "same",
+    "notes": "Paraphrase."
+  },
+  "q3-misconception-partial-distribution": {
+    "grounded": "pass",
+    "correct": "fail",
+    "pedagogy": 0,
+    "concise": 2,
+    "scaffoldSafe": "pass",
+    "authorship": "n/a",
+    "tone": "pass",
+    "value": "worse",
+    "notes": "Again drops the sign (\"the x and the 1\") and restates the hint."
+  },
+  "q3-accepted-distribution": {
+    "grounded": "pass",
+    "correct": "fail",
+    "pedagogy": 1,
+    "concise": 1,
+    "scaffoldSafe": "pass",
+    "authorship": "n/a",
+    "tone": "pass",
+    "value": "worse",
+    "notes": "Expansion is right; \"same operation is applied to both sides\" is still inaccurate for expanding brackets (minor)."
+  },
+  "q3-suggested-step": {
+    "grounded": "pass",
+    "correct": "pass",
+    "pedagogy": 1,
+    "concise": 2,
+    "scaffoldSafe": "pass",
+    "authorship": "n/a",
+    "tone": "pass",
+    "value": "same",
+    "notes": "Shorter, loses the explanation of why."
+  },
+  "q2-misconception-arithmetic": {
+    "grounded": "pass",
+    "correct": "pass",
+    "pedagogy": 0,
+    "concise": 2,
+    "scaffoldSafe": "pass",
+    "authorship": "n/a",
+    "tone": "pass",
+    "value": "worse",
+    "notes": "Still generic (\"worth checking the division carefully\"); explains nothing about the error."
+  }
+}

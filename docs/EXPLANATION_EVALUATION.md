@@ -1,27 +1,26 @@
 # Explanation evaluation
 
-**Status: live model evaluation blocked — no credentials available.** Phase 12 could not run the real model, so nothing
-below is a claim about model quality. The deterministic baseline is real; every model section is marked pending.
+Authoritative summary of how model-written explanations compare with the deterministic baseline.
+
+**Evaluation date:** 2026-10-06 · **Model:** `claude-haiku-4-5-20251001` · **Settings:** temperature 0, max 400 output tokens,
+8 s timeout, one response per case, cache bypassed (the evaluation runs through a fresh handler, so every result is a
+real generation) · **Prompts:** `explanation-prompt/1` (active) and `explanation-prompt/2` (evaluated, not adopted).
+
+> **Reviewer disclosure.** The human-review judgements below were made by the implementing assistant (an AI), not by a
+> person, and not by the model being evaluated. They are recorded in `docs/evaluation/human-review-v1.json` and
+> `-v2.json` with a note per case. A human reviewer should confirm them, particularly the three borderline calls:
+> q2-accepted-subtraction (same), q1-suggested-step (better) and q3-accepted-distribution (worse).
 
 ## 1. Corpus
 
-12 cases in `src/features/explanation/evaluation/corpus.ts`, built from real targets: partial-distribution
-(Q1, Q3), inverse-operation (Q2) and arithmetic misconceptions; accepted steps (divide, subtract, distribute);
-suggested steps (Q1, Q3); the equivalent learner form `2x = 17 - 5`; and one unsupported target. Each case
-states required concepts, expressions it should mention and forbidden claims. It does not define one correct
-sentence.
+12 fixed cases (`src/features/explanation/evaluation/corpus.ts`), unchanged between prompt versions: 4 misconception
+(partial distribution Q1 and Q3, inverse operation Q2, arithmetic Q2), 5 accepted-step (including the equivalent learner
+form `2x = 17 - 5`), 2 suggested-step and 1 unsupported target. Hint and example targets are not in the corpus.
 
-## 2. Rubric
+## 2. Deterministic baseline
 
-Per valid explanation: grounded (pass/fail), correct (pass/fail), pedagogically useful (0–2), concise (0–2),
-progressive-scaffold safe (pass/fail), authorship safe (pass/fail/n.a.), tone (pass/fail), and model value
-against the deterministic text (worse/same/better). Automated checks cover schema, boundary, authorship and
-simple signals; grounding, pedagogy, restatement and future-step leakage are heuristics and are labelled so.
-Correctness, pedagogical value and "better/same/worse" need a person. `npm run eval:explanations:review`
-writes `evaluation-output/explanation-review.md` for that, and a filled `evaluation-output/human-review.json`
-is tallied in the summary.
-
-## 3. Deterministic baseline (run offline)
+Before the live run, the deterministic copy was audited for future-step leakage and fixed (Phase 12: inverse-operation,
+arithmetic and partial-distribution explanations no longer state later results).
 
 ```
 Explanation evaluation — deterministic
@@ -38,36 +37,113 @@ Authorship checks: 1/1
 Unavailable handled: 1/1
 ```
 
-Phase 11 found one progressive-scaffold issue: the Q2 inverse-operation explanation stated the next equation
-(`2x = 12`). Phase 12 audited every deterministic misconception mapping against the question's transition graph
-and removed later results from them: the three inverse-operation explanations no longer state the next equation,
-the three arithmetic explanations no longer state the answer, and the partial-distribution explanations describe
-what the number multiplies instead of the expanded result. Accepted-step and suggested-step explanations still
-state the step they explain, because that equation is part of the supplied state. A test now fails if any
-misconception, hint or example explanation names a later equation. The heuristic reports 0 violations.
+## 3. Prompt V1: automated results (11 supported cases)
 
-## 4. Model tested
+| Check | Result |
+| --- | --- |
+| Valid schema | 10/11 (1 timeout in the first run; not reproduced in 3 reruns) |
+| Boundary violations (automated) | 1 (q2 inverse-operation: the `example` field states `2x = 12`) |
+| Progressive-scaffold flag (heuristic) | 1; human review found 4 (see §5) |
+| Grounding (heuristic) | 8/10 pass; 2 of the 3 flags were false negatives (see §5) |
+| Concise (≤220 characters) | 6/10 |
+| Latency, successful calls | median 1994 ms, average 2102 ms, max 2731 ms (deterministic: ~0 ms) |
+| Tokens per call | median 1039 in, 190 out; max output 214 |
+| Failures | 0 provider errors, 0 invalid outputs, 1 timeout |
 
-None. Live evaluation blocked (no `LLM_API_KEY`). Run `npm run eval:explanations:llm` with `LLM_API_KEY` (and optionally `LLM_MODEL`) set.
+Rerun: `q3-accepted-distribution` timed out at 8 s in the first run. It was rerun 3 times and succeeded each time (2.1–2.3 s,
+identical text), so the timeout was a one-off. The three reruns are the outputs reviewed for that case.
 
-## 5. Prompt version
+## 4. Prompt V1: human review
 
-`explanation-prompt/1` is the only version. It stays active until live results show a concrete, repeated problem.
+| Case | Value | Notes |
+| --- | --- | --- |
+| q1-misconception-partial-distribution | same | Correct, clear, adds little over the deterministic copy |
+| q1-accepted-divide | same | Paraphrase |
+| q1-suggested-step | **better** | Explains why: dividing undoes the multiplication by 3 |
+| q2-misconception-inverse-operation | same | Body safe; `example` states `2x = 12` |
+| q2-accepted-subtraction | same | Adds per-side arithmetic, no material gain |
+| q2-accepted-equivalent-form | **worse** | Ignores the learner's `2x = 17 - 5` |
+| q2-accepted-division | same | Paraphrase |
+| q3-misconception-partial-distribution | **worse** | Drops the sign: "the x and the 1" |
+| q3-accepted-distribution | **worse** | Expansion right; says the operation is applied "to the left side only" yet both sides stay equal |
+| q3-suggested-step | **better** | Explains why: undo the multiplication by 4 |
+| q2-misconception-arithmetic | **worse** | Generic; explains nothing about the error; `example` reveals the answer |
 
-## 6–10. Automated results, human review, latency, failure patterns, prompt changes
+**Better 2, Same 5, Worse 4** (11 reviewed, plus 1 unsupported case handled by the deterministic provider as unavailable).
 
-Blocked, pending credentials. No human review has been done, no prompt V2 exists and none is justified. The runner already records schema, boundary, grounding (heuristic), authorship,
-future-step leakage (heuristic), length, restatement (heuristic), latency (average and median), token counts
-and prompt version per case. The model's own results are saved to `evaluation-output/latest.json` (ignored).
-A second prompt version is created only if repeated failures justify it; V1 is never edited.
+Hard-failure counts (human): mathematical errors 2 (q3 sign drop; q3 muddled reasoning); grounding failures 1 (q2 equivalent);
+scaffold leaks 4, all in the optional `example` field; authorship failures 1 (drops the learner's form, never claims they typed
+`2x = 12`); tone failures 0.
 
-## 11. Routing policy
+## 5. V1 failure patterns
 
-Provisional and unchanged: `llm-first` (`explanationRoutingPolicy.ts`), with the deterministic provider as fallback. This is
-the pre-existing behaviour and is not evidence-based. A hybrid policy would be a change to the per-target
-table in that file, backed by the results above.
+Repeated (3 or more):
+- **Future results in the `example` field: 4 of 10** (q1 partial distribution `3x`/`6`, q2 inverse `2x = 12`, q2 arithmetic answer `6`,
+  q3 partial distribution `4x`/`4`). The UI renders only title and body, so no learner saw these, but the output breaks the scaffold rule.
+  The automated heuristic caught 1: it looks for supplied expressions verbatim and missed paraphrases such as "which equals 6".
+- **No added value on accepted steps and most misconceptions:** 0 better of 5 accepted-step and 0 of 4 misconception cases.
+
+One-off or small-n (not treated as patterns): sign error in Q3 partial distribution (it recurred in the V2 run, same case), generic text
+for the arithmetic case, ignoring the equivalent learner form (1 case), one timeout.
+
+## 6. Prompt V2
+
+**Rationale.** The only repeated, concrete problem was the `example` leak (4 of 10). V2 keeps every V1 restriction and adds one rule:
+every equation, expression and result must already appear in the supplied data, and the example may be left out. Nothing else changed.
+V1 is untouched; V2 is registered separately (`prompts/explanationPromptV2.ts`).
+
+**Result on the same corpus (11 supported cases):** 11/11 valid, 0 timeouts; the model omitted `example` in all 11. Latency median 1671 ms,
+average 1645 ms, max 1985 ms; tokens median 1102 in, 135 out. Human review: **Better 0, Same 6, Worse 5**.
+
+## 7. V1 vs V2
+
+| Pattern | V1 | V2 |
+| --- | --- | --- |
+| Future result in `example` | 4/10 | 0 (field omitted): improved |
+| Future result in the displayed body | 0 | 1 (q1 partial distribution: "This gives 3x + 6, not 3x + 2"): **regressed** |
+| Better than deterministic | 2 | 0: **regressed** (the "why" in suggested steps disappeared) |
+| Q3 sign error | present | present: unchanged |
+| Ignored learner form | present | present: unchanged |
+| Generic arithmetic text | present | present: unchanged |
+| Latency / tokens | median 1994 ms | median 1671 ms: improved |
+
+V2 removed an undisplayed problem, introduced a displayed leak and lost both cases where the model had added value, so **V1 stays
+active**. Single runs at temperature 0 are not a measure of variance.
+
+## 8. Latency
+
+The model took about 2 s per explanation (1.7 s for V2) against effectively zero for deterministic text, and one call in 11 timed out at 8 s.
+That is acceptable for an optional, on-demand explanation behind an "Explaining…" state, but it is a real cost and counts against using
+the model where it adds nothing.
+
+## 9. Authorship
+
+The model never claimed the learner typed `2x = 12`, but in 2 of 2 runs it ignored the learner's `2x = 17 - 5` entirely, which the
+deterministic copy acknowledges. Equivalent learner forms stay deterministic.
+
+## 10. Progressive scaffolding
+
+Displayed bodies were safe in V1 (0 leaks). The leaks were in the unused `example` field (4/10). V2 leaked once in a displayed body.
+The deterministic baseline passes the heuristic with 0 violations and has a test covering every misconception mapping.
+
+## 11. Final routing policy: hybrid by target (`explanationRoutingPolicy.ts`)
+
+| Target | Route |
+| --- | --- |
+| suggested-step | model first, deterministic fallback |
+| misconception | deterministic |
+| hint | deterministic (no corpus evidence) |
+| example | deterministic (no corpus evidence) |
+| accepted-step, including equivalent learner forms | deterministic |
+
+**Why.** Across the reviewed cases the model was better only on suggested steps (2/2). Everywhere else it was the same or worse, with
+a sign error, an ignored learner expression and generic text, and it costs about 2 s. The deterministic provider is always the fallback
+for model routes and the whole path for the rest. The policy is encoded in one table and tested for every target kind.
 
 ## 12. Limitations
 
-- Corpus is small and hand-written; one run per case; heuristics are not semantic understanding.
-- Model results are nondeterministic and are not committed.
+- Only 2 suggested-step cases, both Q1/Q3 bracket questions; none for Q2. "Better" there is a small, mild result.
+- One generation per case, one model, one corpus of 12. Heuristic checks are not semantic; several grounding flags were false negatives.
+- Reviewed by an AI assistant, not a human (see the disclosure). Judgements may shift under human review.
+- Hint and example targets were not evaluated, so they stay deterministic by default rather than by evidence.
+- Raw model output is kept in the ignored `evaluation-output/` directory and is not committed.

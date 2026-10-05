@@ -17,7 +17,9 @@ export type HumanReviewFile = Record<string, HumanReview>;
 
 // Tallies only what a person has actually filled in. Nothing is inferred.
 export function tallyHumanReview(file: HumanReviewFile | undefined) {
-  const entries = Object.values(file ?? {}).filter((entry) => entry.value);
+  const entries = Object.entries(file ?? {})
+    .filter(([id, entry]) => !id.startsWith('_') && entry.value)
+    .map(([, entry]) => entry);
   if (!entries.length) return undefined;
   const count = (value: HumanReview['value']) => entries.filter((entry) => entry.value === value).length;
   return { reviewed: entries.length, better: count('better'), same: count('same'), worse: count('worse') };
@@ -25,7 +27,7 @@ export function tallyHumanReview(file: HumanReviewFile | undefined) {
 
 export function formatHumanReviewSummary(file: HumanReviewFile | undefined): string {
   const tally = tallyHumanReview(file);
-  return tally ? `Human review:\n  Better: ${tally.better}\n  Same: ${tally.same}\n  Worse: ${tally.worse}` : 'Human review pending.';
+  return tally ? `Human review (${tally.reviewed} reviewed):\n  Better: ${tally.better}\n  Same: ${tally.same}\n  Worse: ${tally.worse}` : 'Human review pending.';
 }
 
 const checkLine = (result?: CaseResult) => {

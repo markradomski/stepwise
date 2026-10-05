@@ -209,3 +209,20 @@ describe('deployable adapter', () => {
     }
   });
 });
+
+describe('prompt version in the handler', () => {
+  it('uses the selected prompt version, keeps caches apart, and rejects an unknown version', async () => {
+    const seen: string[] = [];
+    const spy = (async (_u: string, init: RequestInit) => {
+      seen.push(JSON.parse(init.body as string).system);
+      return new Response(JSON.stringify({ content: [{ type: 'tool_use', input: good }] }));
+    }) as unknown as typeof fetch;
+    const v1 = await call(createExplainHandler(baseEnv), spy);
+    const v2 = await call(createExplainHandler({ ...baseEnv, EXPLANATION_PROMPT_VERSION: 'explanation-prompt/2' }), spy);
+    expect(v1.body.promptVersion).toBe('explanation-prompt/1');
+    expect(v2.body.promptVersion).toBe('explanation-prompt/2');
+    expect(seen[0]).not.toContain('Never state a result that was not supplied');
+    expect(seen[1]).toContain('Never state a result that was not supplied');
+    expect((await call(createExplainHandler({ ...baseEnv, EXPLANATION_PROMPT_VERSION: 'explanation-prompt/9' }), spy)).status).toBe(500);
+  });
+});

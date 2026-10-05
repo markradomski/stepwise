@@ -75,8 +75,10 @@ minute), shares identical in-flight requests, and keeps a small bounded cache of
 or failed model call falls back to the deterministic explanation. Limits are tunable in `.env.example`; they are
 in-memory and per instance.
 
-Routing between the model and the deterministic provider is provisional (LLM first, deterministic fallback) until
-live evaluation supplies evidence: see [docs/EXPLANATION_EVALUATION.md](docs/EXPLANATION_EVALUATION.md).
+Stepwise routes explanations by target type based on a reviewed evaluation against the deterministic baseline, not the model
+universally: the model is used first only for suggested-step explanations (better in 2 of 2 reviewed cases, small sample), and the
+deterministic provider handles everything else and is always the fallback. See
+[docs/EXPLANATION_EVALUATION.md](docs/EXPLANATION_EVALUATION.md).
 
 ```bash
 npm run eval:explanations         # deterministic baseline, offline
@@ -84,3 +86,10 @@ npm run eval:explanations:llm     # also evaluates the configured model (opt-in,
 npm run eval:explanations:review  # writes evaluation-output/explanation-review.md for human review
 npm run mock:llm                  # local stand-in for the model API, to try fallbacks without a key
 ```
+
+## Case study note
+
+Stepwise evaluates model-generated explanations against a deterministic baseline for correctness, grounding, scaffold safety,
+authorship, pedagogy and latency. Model use is routed only where reviewed outputs showed added value: in the first evaluation (12
+cases, one model) that was suggested-step explanations only. The reviewed judgements were made by an AI assistant and await a human
+check, and the sample is small.

@@ -135,3 +135,27 @@ describe('evaluation heuristics and review output', () => {
     expect(noKey.json.llm).toBeUndefined();
   });
 });
+
+describe('human review tally is conservative', () => {
+  it('counts only completed values and ignores metadata entries', () => {
+    expect(
+      tallyHumanReview({ _meta: { notes: 'x' } as never, a: { value: 'better' }, b: { notes: 'pending' }, c: { value: 'worse' }, d: { grounded: 'pass' } }),
+    ).toEqual({ reviewed: 2, better: 1, same: 0, worse: 1 });
+  });
+
+  it('keeps separate runs separate', () => {
+    const v1 = { a: { value: 'better' as const }, b: { value: 'same' as const } };
+    const v2 = { a: { value: 'worse' as const }, b: { value: 'same' as const } };
+    expect(tallyHumanReview(v1)).toMatchObject({ better: 1, worse: 0 });
+    expect(tallyHumanReview(v2)).toMatchObject({ better: 0, worse: 1 });
+  });
+
+  it('review markdown preserves case identity and shows live text only for the run it was given', async () => {
+    const model = (async () => new Response(JSON.stringify({ content: [{ type: 'tool_use', input: { version: 'explanation-output/1', title: 'Only in this run', body: 'Dividing both sides by 3 keeps balance.' } }] }))) as unknown as typeof fetch;
+    const llm = await evaluateLlm({ LLM_API_KEY: 'k' }, corpus.slice(0, 1), model);
+    const markdown = buildReviewMarkdown(await evaluateDeterministic(), llm);
+    expect(markdown).toContain(`## ${corpus[0].id}`);
+    expect(markdown).toContain('**Only in this run**');
+    expect(markdown.match(/\*\*Only in this run\*\*/g)).toHaveLength(1);
+  });
+});

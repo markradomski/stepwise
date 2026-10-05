@@ -1,10 +1,13 @@
 import type { ExplainEnv } from '../../../../server/explainHandler';
 import { evaluateDeterministic, evaluateLlm, formatComparison, formatReport, summarise, type ProviderReport } from './runEvaluation';
+import { corpus } from './corpus';
 import { buildReviewMarkdown, formatHumanReviewSummary, type HumanReviewFile } from './review';
 
 export type EvalInput = {
   mode: 'deterministic' | 'llm' | 'review';
   env: ExplainEnv;
+  // Restrict the live run to these cases (for rerunning a suspicious one).
+  caseIds?: string[];
   // Previously saved live results, and any human review, for the review mode.
   saved?: { llm?: ProviderReport; humanReview?: HumanReviewFile };
 };
@@ -13,7 +16,7 @@ export type EvalOutput = { output: string; code: number; json: Record<string, un
 
 // Returns what to print and the exit code. The live model is evaluated only when asked for and only with
 // credentials; results are never invented.
-export async function main({ mode, env, saved }: EvalInput): Promise<EvalOutput> {
+export async function main({ mode, env, saved, caseIds }: EvalInput): Promise<EvalOutput> {
   const deterministic = await evaluateDeterministic();
   const parts = [formatReport(deterministic)];
   let code = summarise(deterministic).hardFailures > 0 ? 1 : 0;
@@ -30,7 +33,7 @@ export async function main({ mode, env, saved }: EvalInput): Promise<EvalOutput>
       parts.push('', 'Live LLM evaluation not run — no API credentials available (set LLM_API_KEY).');
       return { output: parts.join('\n'), code, json };
     }
-    const llm = await evaluateLlm(env);
+    const llm = await evaluateLlm(env, caseIds?.length ? corpus.filter((c) => caseIds.includes(c.id)) : corpus);
     json.llm = llm;
     parts.push('', formatReport(llm), '', formatComparison(deterministic, llm), '', formatHumanReviewSummary(saved?.humanReview));
     if (summarise(llm).hardFailures > 0) code = 1;

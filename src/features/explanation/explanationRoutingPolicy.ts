@@ -17,14 +17,24 @@ const all = (preference: RoutePreference): RoutingPolicy['prefer'] => ({
   'accepted-step': preference,
 });
 
-// Provisional: no live evaluation has been run yet, so there is no evidence for a hybrid policy.
-// Routing by target type belongs here once results exist (see docs/EXPLANATION_EVALUATION.md).
 export const llmFirstPolicy: RoutingPolicy = { id: 'llm-first', label: 'LLM preferred', prefer: all('llm') };
 export const deterministicPolicy: RoutingPolicy = { id: 'deterministic', label: 'Deterministic preferred', prefer: all('deterministic') };
 
-export const activeRoutingPolicy: RoutingPolicy = llmFirstPolicy;
+// Chosen from the reviewed live evaluation of explanation-prompt/1 (docs/EXPLANATION_EVALUATION.md):
+// - suggested-step: the model was better in 2/2 reviewed cases (it explains why the step is taken).
+// - misconception, accepted-step (including equivalent learner forms): same or worse in every reviewed case,
+//   with sign errors, ignored learner expressions and generic text, so deterministic copy is preferred.
+// - hint, example: not in the corpus, so no evidence for the model; deterministic.
+// The deterministic provider remains the fallback for every model route.
+export const hybridPolicy: RoutingPolicy = {
+  id: 'hybrid-by-target',
+  label: 'LLM preferred',
+  prefer: { ...all('deterministic'), 'suggested-step': 'llm' },
+};
+
+export const activeRoutingPolicy: RoutingPolicy = hybridPolicy;
 
 export function routeFor(request: ExplanationRequest, policy: RoutingPolicy = activeRoutingPolicy) {
   const preference = policy.prefer[request.targetKind];
-  return { preference, label: preference === 'llm' ? policy.label : deterministicPolicy.label };
+  return { preference, label: preference === 'llm' ? 'LLM preferred' : 'Deterministic preferred' };
 }
