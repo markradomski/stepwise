@@ -12,7 +12,8 @@
     "test:watch": "vitest",
     "eval:explanations": "node scripts/evalExplanations.mjs",
     "eval:explanations:llm": "node scripts/evalExplanations.mjs --llm",
-    "mock:llm": "node scripts/mockLlmServer.mjs"
+    "mock:llm": "node scripts/mockLlmServer.mjs",
+    "eval:explanations:review": "node scripts/evalExplanations.mjs --review"
   },
   "dependencies": {
     "react": "^19.3.0",

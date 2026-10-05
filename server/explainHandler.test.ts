@@ -100,7 +100,7 @@ describe('explain endpoint: model call', () => {
 
   it('handles HTTP and network errors', async () => {
     const http = (async () => new Response('{}', { status: 500 })) as unknown as typeof fetch;
-    expect(await post(request, env, http)).toMatchObject({ status: 502, body: { reason: 'network' } });
+    expect(await post(request, env, http)).toMatchObject({ status: 502, body: { reason: 'provider-error' } });
     const down = (async () => {
       throw new TypeError('fetch failed');
     }) as unknown as typeof fetch;

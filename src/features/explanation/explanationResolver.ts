@@ -17,6 +17,7 @@ export type ResolutionMeta = {
   outcome: ExplanationOutcome;
   reason?: ResolutionReason;
   latencyMs: number;
+  routing?: string;
 } & ProviderMeta;
 
 export type ExplanationResolution =

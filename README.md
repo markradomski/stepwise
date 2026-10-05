@@ -69,10 +69,18 @@ cp .env.example .env
 npm run dev
 ```
 
-Evaluate explanations (the live run uses the API and is opt-in):
+The same explanation handler runs locally as Vite middleware and when deployed as Cloudflare Pages Functions
+(`functions/api/`; `wrangler pages deploy dist` serves both). It applies a per-client rate limit (default 10 a
+minute), shares identical in-flight requests, and keeps a small bounded cache of validated results. A rate-limited
+or failed model call falls back to the deterministic explanation. Limits are tunable in `.env.example`; they are
+in-memory and per instance.
+
+Routing between the model and the deterministic provider is provisional (LLM first, deterministic fallback) until
+live evaluation supplies evidence: see [docs/EXPLANATION_EVALUATION.md](docs/EXPLANATION_EVALUATION.md).
 
 ```bash
-npm run eval:explanations        # deterministic, offline
-npm run eval:explanations:llm    # also evaluates the configured model
-npm run mock:llm                 # local stand-in for the model API, to try fallbacks without a key
+npm run eval:explanations         # deterministic baseline, offline
+npm run eval:explanations:llm     # also evaluates the configured model (opt-in, uses the API)
+npm run eval:explanations:review  # writes evaluation-output/explanation-review.md for human review
+npm run mock:llm                  # local stand-in for the model API, to try fallbacks without a key
 ```

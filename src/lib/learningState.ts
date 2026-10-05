@@ -29,6 +29,8 @@ export type ExplanationInfo = {
   attempted: string;
   used: string;
   outcome: string;
+  routing: string;
+  cache: string;
   promptVersion: string;
   latencyMs?: number;
   requests: number;

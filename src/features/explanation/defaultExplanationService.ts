@@ -1,5 +1,6 @@
 import { deterministicExplanationProvider } from './deterministicExplanationProvider';
-import { resolveExplanation, type ExplanationService } from './explanationResolver';
+import { routeFor } from './explanationRoutingPolicy';
+import { resolveExplanation, type ExplanationResolution, type ExplanationService } from './explanationResolver';
 import { createLlmExplanationProvider } from './llmExplanationProvider';
 
 type Config = { provider: 'llm' | 'deterministic' };
@@ -26,9 +27,12 @@ export function createDefaultExplanationService(fetchImpl?: typeof fetch): Expla
     async resolve(request) {
       config ??= loadConfig(fetchImpl);
       const { provider } = await config;
-      return provider === 'llm'
-        ? resolveExplanation(request, llm, deterministicExplanationProvider)
-        : resolveExplanation(request, deterministicExplanationProvider);
+      const route = routeFor(request);
+      const resolution =
+        provider === 'llm' && route.preference === 'llm'
+          ? await resolveExplanation(request, llm, deterministicExplanationProvider)
+          : await resolveExplanation(request, deterministicExplanationProvider);
+      return { ...resolution, meta: { ...resolution.meta, routing: provider === 'llm' ? route.label : undefined } } as ExplanationResolution;
     },
   };
 }

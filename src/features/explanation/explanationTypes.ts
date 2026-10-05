@@ -52,9 +52,9 @@ export type ExplanationResult = {
 export type UntrustedExplanationResult = unknown;
 
 // Transport-level failures a network provider can report. Anything else is the provider's own business.
-export type ProviderFailure = 'timeout' | 'network' | 'invalid-output';
+export type ProviderFailure = 'timeout' | 'network' | 'invalid-output' | 'rate-limited' | 'provider-error';
 
-export type ProviderMeta = { promptVersion?: string; requestId?: string };
+export type ProviderMeta = { promptVersion?: string; requestId?: string; cache?: 'hit' | 'miss' };
 
 export type ExplanationProviderOutcome =
   | { status: 'ok'; value: UntrustedExplanationResult; meta?: ProviderMeta }

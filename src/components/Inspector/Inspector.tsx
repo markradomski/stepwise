@@ -57,7 +57,9 @@ export function Inspector({ state }: Props) {
             <LearningStateRow label="Provider attempted" value={state.explanation.attempted} />
             <LearningStateRow label="Provider used" value={state.explanation.used} />
             <LearningStateRow label="Outcome" value={state.explanation.outcome} />
+            <LearningStateRow label="Routing" value={state.explanation.routing} />
             <LearningStateRow label="Prompt version" value={state.explanation.promptVersion} />
+            <LearningStateRow label="Cache" value={state.explanation.cache} />
             {state.explanation.latencyMs !== undefined && (
               <LearningStateRow label="Latency" value={`${state.explanation.latencyMs} ms`} />
             )}

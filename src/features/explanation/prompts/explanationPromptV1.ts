@@ -35,7 +35,7 @@ export const outputSchema = {
   },
 } as const;
 
-export type ExplanationPrompt = { version: typeof PROMPT_VERSION; system: string; user: string };
+export type ExplanationPrompt = { version: string; system: string; user: string };
 
 // Built on the server from the structured request only. Learner text is JSON-encoded inside a delimited
 // data block, so it cannot extend the instructions.

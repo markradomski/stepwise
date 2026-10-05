@@ -1,6 +1,8 @@
 import { outputSchema, type ExplanationPrompt } from '../src/features/explanation/prompts/explanationPromptV1';
 
-export type LlmFailure = 'timeout' | 'network' | 'malformed';
+export type LlmFailure = 'timeout' | 'network' | 'provider' | 'malformed';
+
+export type LlmUsage = { inputTokens?: number; outputTokens?: number };
 
 export class LlmError extends Error {
   constructor(public readonly kind: LlmFailure) {
@@ -19,7 +21,7 @@ type LlmCall = {
 
 // The only file that knows which vendor API is behind the proxy. It forces a single structured tool
 // result, so the model can only answer in the output schema.
-export async function callLlm({ prompt, apiKey, model, baseUrl, timeoutMs, fetchImpl }: LlmCall): Promise<unknown> {
+export async function callLlm({ prompt, apiKey, model, baseUrl, timeoutMs, fetchImpl }: LlmCall): Promise<{ output: unknown; usage: LlmUsage }> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -43,11 +45,15 @@ export async function callLlm({ prompt, apiKey, model, baseUrl, timeoutMs, fetch
         tool_choice: { type: 'tool', name: 'return_explanation' },
       }),
     });
-    if (!response.ok) throw new LlmError('network');
-    const payload = (await response.json()) as { content?: Array<{ type?: string; input?: unknown }> };
+    if (!response.ok) throw new LlmError('provider');
+    const payload = (await response.json()) as {
+      content?: Array<{ type?: string; input?: unknown }>;
+      usage?: { input_tokens?: unknown; output_tokens?: unknown };
+    };
     const block = payload.content?.find((part) => part.type === 'tool_use');
     if (!block) throw new LlmError('malformed');
-    return block.input;
+    const count = (value: unknown) => (typeof value === 'number' ? value : undefined);
+    return { output: block.input, usage: { inputTokens: count(payload.usage?.input_tokens), outputTokens: count(payload.usage?.output_tokens) } };
   } catch (error) {
     if (error instanceof LlmError) throw error;
     if (error instanceof Error && error.name === 'AbortError') throw new LlmError('timeout');

@@ -320,7 +320,7 @@ describe('model-backed provider with deterministic fallback', () => {
     explanationFallback: deterministicExplanationProvider,
   });
   const envelope = (value: unknown) =>
-    (async () => new Response(JSON.stringify({ status: 'ok', promptVersion: 'explanation-prompt/1', requestId: 'r1', value }))) as unknown as typeof fetch;
+    (async () => new Response(JSON.stringify({ status: 'ok', promptVersion: 'explanation-prompt/1', requestId: 'r1', cache: 'miss', value }))) as unknown as typeof fetch;
   const setupModel = (fetchImpl: typeof fetch) => {
     const { explanationProvider, explanationFallback } = withModel(fetchImpl);
     const user = userEvent.setup();
@@ -341,6 +341,7 @@ describe('model-backed provider with deterministic fallback', () => {
     expect(value('Provider used')).toHaveTextContent('LLM');
     expect(value('Outcome')).toHaveTextContent('Success');
     expect(value('Prompt version')).toHaveTextContent('explanation-prompt/1');
+    expect(value('Cache')).toHaveTextContent('Miss');
     expect(value('Latency')).toHaveTextContent(/\d+ ms/);
     expect(within(screen.getByRole('main')).queryByText(/\b(LLM|model|fallback|timeout)\b/i)).toBeNull();
   });
@@ -348,6 +349,7 @@ describe('model-backed provider with deterministic fallback', () => {
   it.each([
     ['a network error', (async () => { throw new TypeError('offline'); }) as unknown as typeof fetch, 'Fallback · Network'],
     ['a timeout', (async () => new Response(JSON.stringify({ status: 'error', reason: 'timeout' }), { status: 504 })) as unknown as typeof fetch, 'Fallback · Timeout'],
+    ['a rate limit', (async () => new Response(JSON.stringify({ status: 'error', reason: 'rate-limited' }), { status: 429 })) as unknown as typeof fetch, 'Fallback · Rate limited'],
     ['invalid output', envelope({ ...llmGood, isCorrect: true }), 'Fallback · Invalid output'],
     ['malformed output', (async () => new Response('<html>')) as unknown as typeof fetch, 'Fallback · Invalid output'],
   ])('shows the deterministic explanation after %s, without any technical detail', async (_name, fetchImpl, outcome) => {

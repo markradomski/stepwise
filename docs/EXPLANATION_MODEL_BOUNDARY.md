@@ -59,10 +59,35 @@ Logs record status and latency only.
 judgement, no system terms, no blame, no future answers), grounding, pedagogy, authorship. It is a practical
 sanity check, not an educational benchmark.
 
-## 10. Known limitations
+## 10. Deployable boundary and abuse controls
 
-- The local proxy is a Vite middleware; a deployment needs the same handlers as a function plus rate limiting
-  and abuse controls.
+One framework-free handler (`server/explainHandler.ts`) serves both the Vite dev middleware
+(`server/vitePlugin.ts`) and a web-standard adapter (`server/webAdapter.ts`) used by the Cloudflare Pages
+Functions in `functions/api/`. Behaviour is identical on both paths; only the client key differs (socket
+address locally, `CF-Connecting-IP` when deployed).
+
+- **Rate limit:** fixed window per anonymous client key (default 10 / minute). Exceeding it returns 429
+  `rate-limited`; the browser falls back to the deterministic explanation. Nothing is stored beyond the window.
+- **Deduplication:** identical concurrent requests share one model call within a server instance.
+- **Cache:** bounded in-memory LRU with TTL (default 200 entries, 15 minutes). Keyed on prompt version, model
+  and the normalised request. Only validated successes are cached; errors, timeouts and invalid output never are.
+- **Outcomes:** success, deterministic-only, and fallback reasons timeout, network, invalid output, rate limited,
+  provider error; or unavailable. Shown only in the inspector.
+- **Limits of these controls:** state is per process/isolate, so a distributed deployment needs a shared limiter.
+
+## 11. Routing policy
+
+Provisional `llm-first`; see `docs/EXPLANATION_EVALUATION.md`. Routing lives in `explanationRoutingPolicy.ts` as
+an explicit per-target table.
+
+## 12. Live evaluation findings
+
+Not yet run. Active prompt: `explanation-prompt/1`.
+
+## 13. Known limitations
+
+- Rate limiting, dedupe and cache are in-memory and per instance.
+- Unresolved: real model quality, scaffold leakage and equivalent-input authorship are unmeasured.
 - Grounding and pedagogy checks are pattern-based and can miss subtle errors; boundary checks can
   over-flag unusual wording.
 - What can be explained is defined by the deterministic mapping, so the model cannot extend coverage.

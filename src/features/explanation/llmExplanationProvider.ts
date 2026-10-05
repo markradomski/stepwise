@@ -1,8 +1,22 @@
-import type { ExplanationProvider, ExplanationProviderOutcome, ExplanationRequest } from './explanationTypes';
+import type { ExplanationProvider, ExplanationProviderOutcome, ExplanationRequest, ProviderFailure } from './explanationTypes';
 
 type Options = { endpoint?: string; timeoutMs?: number; fetchImpl?: typeof fetch };
 
 const DEFAULT_TIMEOUT_MS = 10000;
+
+const failureFor = (reason: unknown): ProviderFailure => {
+  switch (reason) {
+    case 'timeout':
+    case 'rate-limited':
+    case 'provider-error':
+    case 'invalid-output':
+      return reason;
+    case 'malformed':
+      return 'invalid-output';
+    default:
+      return 'network';
+  }
+};
 
 // Only these fields ever leave the browser, whatever object is passed in.
 const pick = (request: ExplanationRequest): ExplanationRequest => ({
@@ -39,15 +53,14 @@ export function createLlmExplanationProvider({
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify(pick(request)),
         });
-        let envelope: { status?: unknown; reason?: unknown; value?: unknown; promptVersion?: unknown; requestId?: unknown };
+        let envelope: { status?: unknown; reason?: unknown; value?: unknown; promptVersion?: unknown; requestId?: unknown; cache?: unknown };
         try {
           envelope = await response.json();
         } catch {
           return { status: 'failed', reason: 'invalid-output' };
         }
         if (!response.ok) {
-          if (envelope?.reason === 'timeout') return { status: 'failed', reason: 'timeout' };
-          return { status: 'failed', reason: envelope?.reason === 'invalid-output' ? 'invalid-output' : 'network' };
+          return { status: 'failed', reason: failureFor(envelope?.reason) };
         }
         if (envelope?.status !== 'ok' || envelope.value === undefined) return { status: 'failed', reason: 'invalid-output' };
         return {
@@ -56,6 +69,7 @@ export function createLlmExplanationProvider({
           meta: {
             promptVersion: typeof envelope.promptVersion === 'string' ? envelope.promptVersion : undefined,
             requestId: typeof envelope.requestId === 'string' ? envelope.requestId : undefined,
+            cache: envelope.cache === 'hit' || envelope.cache === 'miss' ? envelope.cache : undefined,
           },
         };
       } catch (error) {

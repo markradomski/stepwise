@@ -1,3 +1,4 @@
+import { practiceQuestions } from '../../practice/questions';
 import { validateExplanationResult } from '../validateExplanation';
 import type { EvaluationCase } from './corpus';
 
@@ -7,6 +8,11 @@ export type CheckResult = {
   grounded: boolean;
   pedagogy: boolean;
   authorship: boolean | null;
+  // Heuristic signals. They are conservative pattern checks, not judgements of meaning.
+  futureLeak: boolean;
+  concision: 0 | 1 | 2;
+  restatesHint: boolean;
+  characters: number;
   notes: string[];
 };
 
@@ -23,11 +29,43 @@ const boundaryPatterns: Array<[RegExp, string]> = [
   [/[<>]|https?:|\]\(/, 'markup or links'],
 ];
 
+const tokens = (text: string) => new Set(normalise(text).toLowerCase().split(/[^a-z0-9=+*/()-]+/).filter(Boolean));
+
+// Word-overlap (Jaccard) between two texts. A rough restatement signal only.
+export function similarity(a: string, b: string): number {
+  const left = tokens(a);
+  const right = tokens(b);
+  const shared = [...left].filter((token) => right.has(token)).length;
+  const union = new Set([...left, ...right]).size;
+  return union === 0 ? 0 : shared / union;
+}
+
+// Expressions of the question that come after what the request supplied: a rough list of solution steps
+// not yet revealed to the learner.
+export function futureExpressions(testCase: EvaluationCase): string[] {
+  const { request } = testCase;
+  const question = practiceQuestions.find((candidate) => candidate.id === request.questionId);
+  if (!question) return [];
+  const supplied = new Set([request.currentExpression, request.canonicalExpression, request.learnerExpression].filter(Boolean) as string[]);
+  const frontier = request.targetKind === 'suggested-step' || request.targetKind === 'accepted-step' ? request.canonicalExpression : request.currentExpression;
+  const seen = new Set<string>();
+  const walk = (expression?: string) => {
+    for (const next of (expression && question.transitions[expression]) || []) {
+      if (!seen.has(next)) {
+        seen.add(next);
+        walk(next);
+      }
+    }
+  };
+  walk(frontier);
+  return [...seen].filter((expression) => !supplied.has(expression));
+}
+
 export function checkExplanation(testCase: EvaluationCase, output: unknown): CheckResult {
   const notes: string[] = [];
   const validated = validateExplanationResult(output);
   if (!validated.ok) {
-    return { schema: false, boundary: false, grounded: false, pedagogy: false, authorship: null, notes: [`schema: ${validated.reason}`] };
+    return { schema: false, boundary: false, grounded: false, pedagogy: false, authorship: null, futureLeak: false, concision: 0, restatesHint: false, characters: 0, notes: [`schema: ${validated.reason}`] };
   }
   const text = normalise(`${validated.value.title} ${validated.value.body} ${validated.value.example ?? ''}`);
   const { expect, request } = testCase;
@@ -68,5 +106,12 @@ export function checkExplanation(testCase: EvaluationCase, output: unknown): Che
   const pedagogy = explainsWhy && !restates;
   if (!pedagogy) notes.push(restates ? 'pedagogy: restates the hint' : 'pedagogy: does not explain why');
 
-  return { schema: true, boundary, grounded, pedagogy, authorship, notes };
+  const future = futureExpressions(testCase).filter((expression) => text.includes(normalise(expression)));
+  const futureLeak = future.length > 0;
+  if (futureLeak) notes.push(`heuristic: names a later step (${future.join(', ')})`);
+  const characters = validated.value.body.length;
+  const concision = characters <= 220 ? 2 : characters <= 380 ? 1 : 0;
+  const restatesHint = content !== undefined && (restates || similarity(text, content) > 0.8);
+
+  return { schema: true, boundary, grounded, pedagogy, authorship, futureLeak, concision, restatesHint, characters, notes };
 }

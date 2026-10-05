@@ -108,3 +108,22 @@ describe('explanation resolution and fallback', () => {
     expect(await service.resolve(request)).toMatchObject({ status: 'unavailable', meta: { reason: 'error' } });
   });
 });
+
+describe('rate limited and provider-error outcomes', () => {
+  const llm = (fetchImpl: typeof fetch) => createLlmExplanationProvider({ fetchImpl });
+  it('reports 429 as rate-limited and falls back to the deterministic explanation', async () => {
+    const limited = json({ status: 'error', reason: 'rate-limited' }, 429);
+    expect(await llm(limited).explain(request)).toEqual({ status: 'failed', reason: 'rate-limited' });
+    const resolution = await resolveExplanation(request, llm(limited), deterministicExplanationProvider);
+    expect(resolution).toMatchObject({ status: 'ready', meta: { used: 'deterministic', outcome: 'fallback', reason: 'rate-limited' } });
+  });
+
+  it('keeps provider errors distinct from network errors', async () => {
+    expect(await llm(json({ status: 'error', reason: 'provider-error' }, 502)).explain(request)).toEqual({ status: 'failed', reason: 'provider-error' });
+  });
+
+  it('carries the cache state from the server', async () => {
+    const hit = json({ status: 'ok', cache: 'hit', value: good });
+    expect(await llm(hit).explain(request)).toMatchObject({ meta: { cache: 'hit' } });
+  });
+});

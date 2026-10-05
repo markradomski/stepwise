@@ -40,7 +40,15 @@ const forwardActionEvents: Record<ForwardAction, PracticeAction> = {
 
 const providerLabel = (id: string) => (id === 'llm' ? 'LLM' : id === 'deterministic' ? 'Deterministic' : id);
 
-const reasonLabels = { timeout: 'Timeout', network: 'Network', 'invalid-output': 'Invalid output', unavailable: 'Unavailable', error: 'Error' };
+const reasonLabels = {
+  timeout: 'Timeout',
+  network: 'Network',
+  'invalid-output': 'Invalid output',
+  'rate-limited': 'Rate limited',
+  'provider-error': 'Provider error',
+  unavailable: 'Unavailable',
+  error: 'Error',
+};
 
 function outcomeLabel(meta: ResolutionMeta): string {
   const reason = meta.reason ? ` · ${reasonLabels[meta.reason]}` : '';
@@ -145,7 +153,9 @@ export function PracticeView({ showInspector, explanationProvider, explanationFa
     attempted: meta ? providerLabel(meta.attempted) : '—',
     used: meta?.used ? providerLabel(meta.used) : '—',
     outcome: meta ? outcomeLabel(meta) : '—',
+    routing: meta?.routing ?? '—',
     promptVersion: meta?.promptVersion ?? '—',
+    cache: meta?.cache === 'hit' ? 'Hit' : meta?.cache === 'miss' ? 'Miss' : '—',
     latencyMs: meta?.latencyMs,
   };
   const targets = explanationTargets(practice);
