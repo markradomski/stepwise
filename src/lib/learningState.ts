@@ -5,6 +5,10 @@ export type LearningState = {
   strategy: string;
   attempt: number;
   lastValidation?: string;
+  recognition?: string;
+  submittedExpression?: string;
+  canonicalExpression?: string;
+  helpSource?: string;
   misconception: string;
   repeatedMisconceptionCount: number;
   hintLevel: { current: number; max: number };

@@ -64,13 +64,6 @@ describe('practice interaction', () => {
     expect(screen.getByRole('button', { name: 'Show an example' })).toBeInTheDocument();
   });
 
-  it('gives generic feedback for an unrecognised step and offers no help', async () => {
-    const { submit } = setup();
-    await submit('x = 100');
-    expect(status()).toHaveTextContent('Have another look at that step.');
-    expect(screen.queryByRole('button', { name: /hint|example|next step/i })).not.toBeInTheDocument();
-  });
-
   it.each([
     ['distribute first', ['3x + 6 = 18', '3x = 12', 'x = 4'], 3],
     ['divide first', ['x + 2 = 6', 'x = 4'], 2],
@@ -82,6 +75,103 @@ describe('practice interaction', () => {
     expect(screen.getAllByText('Step accepted')).toHaveLength(count);
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
     expect(screen.queryByText(/mastery|%/i)).not.toBeInTheDocument();
+  });
+});
+
+describe('equivalent forms', () => {
+  it('accepts a division written out and keeps it as entered', async () => {
+    const { input, submit } = setup();
+    await submit('(x + 2) = 18/3');
+
+    const steps = within(screen.getByRole('list', { name: 'Working so far' }));
+    expect(steps.getByRole('math', { name: '(x + 2) = 18/3' })).toBeInTheDocument();
+    expect(steps.getByText('Step accepted')).toBeInTheDocument();
+    expect(screen.queryByRole('math', { name: 'x + 2 = 6' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Needs attention')).not.toBeInTheDocument();
+    expect(screen.queryByText('Not recognised yet')).not.toBeInTheDocument();
+    expect(status()).toBeEmptyDOMElement();
+    expect(input()).toHaveValue('');
+    expect(input()).toHaveFocus();
+
+    await submit('x = 4');
+    expect(status()).toHaveTextContent('Solved');
+    expect(screen.getByRole('math', { name: '(x + 2) = 18/3' })).toBeInTheDocument();
+  });
+
+  it('completes when the last step is an unsimplified division', async () => {
+    const { submit } = setup();
+    await submit('3x + 6 = 18');
+    await submit('3x = 12');
+    await submit('x = 12/3');
+    expect(status()).toHaveTextContent('Solved');
+    expect(screen.getByRole('math', { name: 'x = 12/3' })).toBeInTheDocument();
+    expect(screen.getAllByText('Step accepted')).toHaveLength(3);
+  });
+});
+
+describe('unrecognised steps', () => {
+  it('keeps the step visible, says honestly that it was not matched, and does not claim an error', async () => {
+    const { input, submit } = setup();
+    await submit('6 + 3x = 18');
+
+    expect(screen.getByRole('math', { name: '6 + 3x = 18' })).toBeInTheDocument();
+    expect(screen.getByText('Not recognised yet')).toBeInTheDocument();
+    expect(status()).toHaveTextContent('I can’t quite match that step yet.');
+    expect(status()).toHaveTextContent('Check whether both sides still represent the same value.');
+    expect(screen.queryByText(/have another look|needs attention|wrong|incorrect|invalid/i)).not.toBeInTheDocument();
+    expect(input()).toHaveValue('6 + 3x = 18');
+    expect(input()).toHaveFocus();
+  });
+
+  it('offers only a generic hint, tied to the current step', async () => {
+    const { input, submit, press } = setup();
+    await submit('6 + 3x = 18');
+    expect(screen.getByRole('button', { name: 'Need a hint?' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /example|next step/i })).not.toBeInTheDocument();
+
+    await press('Need a hint?');
+    expect(status()).toHaveTextContent('Try making the equation simpler while doing the same thing to both sides.');
+    expect(screen.queryByRole('button', { name: /hint|example|next step/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: 'Worked example' })).not.toBeInTheDocument();
+    expect(input()).toHaveFocus();
+
+    await submit('banana');
+    expect(screen.queryByRole('button', { name: /example|next step/i })).not.toBeInTheDocument();
+  });
+
+  it('uses the hint for whichever supported step the learner is on', async () => {
+    const { submit, press } = setup();
+    await submit('3x + 6 = 18');
+    await submit('banana');
+    await press('Need a hint?');
+    expect(status()).toHaveTextContent('Think about which operation would undo the +6.');
+  });
+
+  it('treats nonsense the same way, without inventing a diagnosis', async () => {
+    const { submit } = setup(true);
+    await submit('banana');
+    expect(status()).toHaveTextContent('I can’t quite match that step yet.');
+    expect(screen.getByText('Detected misconception', { selector: 'dt' }).nextElementSibling).toHaveTextContent('None');
+    expect(screen.getByText('Help source', { selector: 'dt' }).nextElementSibling).toHaveTextContent('Generic');
+  });
+
+  it('clears the fallback help once the learner returns to a supported step', async () => {
+    const { submit, press } = setup();
+    await submit('6 + 3x = 18');
+    await press('Need a hint?');
+    await submit('3x + 6 = 18');
+    expect(screen.queryByText('Try making the equation simpler', { exact: false })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /hint/i })).not.toBeInTheDocument();
+    expect(status()).toBeEmptyDOMElement();
+  });
+
+  it('still diagnoses a recognised misconception with its specific help', async () => {
+    const { submit, press } = setup();
+    await submit('3x + 2 = 18');
+    expect(status()).toHaveTextContent('Check what the 3 multiplies inside the brackets.');
+    expect(screen.getByText('Needs attention')).toBeInTheDocument();
+    await press('Need a hint?');
+    expect(status()).toHaveTextContent('The 3 applies to everything inside the brackets.');
   });
 });
 
@@ -253,6 +343,37 @@ describe('inspector', () => {
     expect(value('Mastery')).toHaveTextContent('Hidden');
     expect(value('Misconception label')).toHaveTextContent('Hidden');
     expect(screen.getByText('0.61')).toBeInTheDocument();
+  });
+
+  it('distinguishes exact, equivalent and unrecognised steps', async () => {
+    const { submit } = setup(true);
+    await submit('x+2=18/3');
+    expect(value('Last validation')).toHaveTextContent('Valid, direct');
+    expect(value('Recognition')).toHaveTextContent('Equivalent form');
+    expect(value('Submitted')).toHaveTextContent('x + 2 = 18/3');
+    expect(value('Canonical state')).toHaveTextContent('x + 2 = 6');
+    expect(value('Detected misconception')).toHaveTextContent('None');
+
+    await submit('x = 4');
+    expect(value('Recognition')).toHaveTextContent('Exact match');
+    expect(screen.queryByText('Canonical state', { selector: 'dt' })).not.toBeInTheDocument();
+  });
+
+  it('shows an unrecognised step as undiagnosed with generic help', async () => {
+    const { submit, press } = setup(true);
+    await submit('6 + 3x = 18');
+    expect(value('Last validation')).toHaveTextContent('Unrecognised');
+    expect(value('Detected misconception')).toHaveTextContent('None');
+    expect(value('Help source')).toHaveTextContent('Generic');
+    expect(value('Hint')).toHaveTextContent('Available');
+    expect(value('Worked example')).toHaveTextContent('Hidden');
+    expect(value('Misconception label')).toHaveTextContent('Hidden');
+    expect(value('Next solution step')).toHaveTextContent('Hidden');
+
+    await press('Need a hint?');
+    expect(value('Hint')).toHaveTextContent('Visible');
+    expect(value('Worked example')).toHaveTextContent('Hidden');
+    expect(value('Next solution step')).toHaveTextContent('Hidden');
   });
 
   it('shows that a skipped answer is valid but not complete', async () => {

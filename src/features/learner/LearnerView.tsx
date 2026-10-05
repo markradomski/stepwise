@@ -41,7 +41,8 @@ export function LearnerView({
   secondaryAction,
   inspector,
 }: LearnerViewProps) {
-  const lastStepIncorrect = workingSteps.at(-1)?.status === 'incorrect';
+  const lastStepStatus = workingSteps.at(-1)?.status;
+  const lastStepNeedsWork = lastStepStatus === 'incorrect' || lastStepStatus === 'unrecognised';
   const primaryRef = useRef<HTMLButtonElement>(null);
   const primaryFocusKey = primaryAction?.focusKey ?? 0;
 
@@ -67,7 +68,7 @@ export function LearnerView({
               ))}
             </ol>
           )}
-          <div role="status" className={`${styles.feedbackSlot} ${lastStepIncorrect ? styles.attached : ''}`}>
+          <div role="status" className={`${styles.feedbackSlot} ${lastStepNeedsWork ? styles.attached : ''}`}>
             {feedback && <FeedbackMessage {...feedback} />}
             {hint && <FeedbackMessage kind="hint" title="Hint" message={hint} />}
             {example && <WorkedExample {...example} />}

@@ -21,22 +21,33 @@ function strategyFor(state: PracticeState): string {
 function validationLabel(result?: ValidationResult): string {
   if (!result) return 'None';
   if (result.kind === 'valid') return result.progression === 'direct' ? 'Valid, direct' : 'Valid, skipped steps';
-  return result.kind === 'misconception' ? 'Misconception' : 'Not recognised';
+  return result.kind === 'misconception' ? 'Misconception' : 'Unrecognised';
+}
+
+function helpSourceLabel(state: PracticeState): string {
+  if (!state.helpSource) return 'None';
+  return state.helpSource.kind === 'misconception' ? 'Misconception' : 'Generic';
 }
 
 export function learningStateFromPractice(state: PracticeState): LearningState {
   const detected = state.lastResult?.kind === 'misconception' ? state.lastResult.misconception : undefined;
   const help = helpStatus(state);
+  const valid = state.lastResult?.kind === 'valid' ? state.lastResult : undefined;
+  const equivalent = valid?.recognition === 'equivalent';
   return {
     concept: 'Linear equations',
     strategy: strategyFor(state),
     attempt: state.attemptCount,
     lastValidation: validationLabel(state.lastResult),
+    recognition: valid && (equivalent ? 'Equivalent form' : 'Exact match'),
+    submittedExpression: equivalent ? valid.submittedExpression : undefined,
+    canonicalExpression: equivalent ? valid.canonicalExpression : undefined,
+    helpSource: helpSourceLabel(state),
     misconception: detected ? misconceptionLabels[detected] : 'None',
     repeatedMisconceptionCount: detected ? (state.misconceptionCounts[detected] ?? 0) : 0,
     hintLevel: { current: help.level, max: 3 },
     masteryEstimate: 0.61,
-    intervention: interventions[help.level],
+    intervention: state.helpSource?.kind === 'fallback' ? 'Generic prompt' : interventions[help.level],
     exposure: {
       mastery: 'hidden',
       misconceptionLabel: 'hidden',

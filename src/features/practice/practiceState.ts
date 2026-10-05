@@ -10,6 +10,11 @@ export type PracticeStep = {
   source: StepSource;
 };
 
+// Fallback help is deliberately not a misconception: an unrecognised step carries no diagnosis.
+export type HelpSource =
+  | { kind: 'misconception'; misconception: Misconception }
+  | { kind: 'fallback'; canonicalExpression: string };
+
 export type HelpState = {
   hintRequested: boolean;
   exampleRequested: boolean;
@@ -25,7 +30,7 @@ export type PracticeState = {
   attemptCount: number;
   submissions: number;
   misconceptionCounts: Partial<Record<Misconception, number>>;
-  activeMisconception?: Misconception;
+  helpSource?: HelpSource;
   lastResult?: ValidationResult;
   rejectedExpression?: string;
   help: HelpState;

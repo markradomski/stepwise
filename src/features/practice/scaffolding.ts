@@ -1,4 +1,5 @@
 import type { PracticeQuestion } from './practiceQuestion';
+import type { HelpSource } from './practiceState';
 import type { Misconception } from './validation';
 
 export type WorkedExample = { before: string; after: string; explanation: string };
@@ -30,4 +31,16 @@ export const scaffolds: Record<Misconception, Scaffold> = {
 // The first listed transition is the preferred path.
 export function nextStepFor(question: PracticeQuestion, expression: string): string | undefined {
   return question.transitions[expression]?.[0];
+}
+
+const fallbackHints: Record<string, string> = {
+  '3(x + 2) = 18': 'Try making the equation simpler while doing the same thing to both sides.',
+  '3x + 6 = 18': 'Think about which operation would undo the +6.',
+  'x + 2 = 6': 'Think about which operation would undo the +2.',
+  '3x = 12': 'What operation would leave x on its own?',
+};
+
+export function hintFor(source: HelpSource | undefined): string | undefined {
+  if (!source) return undefined;
+  return source.kind === 'misconception' ? scaffolds[source.misconception].hint : fallbackHints[source.canonicalExpression];
 }

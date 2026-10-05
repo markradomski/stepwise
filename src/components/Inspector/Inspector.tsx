@@ -20,7 +20,11 @@ export function Inspector({ state }: Props) {
           <LearningStateRow label="Current strategy" value={state.strategy} />
           <LearningStateRow label="Attempt" value={String(state.attempt)} />
           {state.lastValidation && <LearningStateRow label="Last validation" value={state.lastValidation} />}
+          {state.recognition && <LearningStateRow label="Recognition" value={state.recognition} />}
+          {state.submittedExpression && <LearningStateRow label="Submitted" value={state.submittedExpression} />}
+          {state.canonicalExpression && <LearningStateRow label="Canonical state" value={state.canonicalExpression} />}
           <LearningStateRow label="Detected misconception" value={state.misconception} />
+          {state.helpSource && <LearningStateRow label="Help source" value={state.helpSource} />}
           <LearningStateRow label="Repeated misconception count" value={String(state.repeatedMisconceptionCount)} />
           <LearningStateRow label="Hint level" value={`${state.hintLevel.current} / ${state.hintLevel.max}`} />
           <LearningStateRow label="Mastery estimate" value={state.masteryEstimate.toFixed(2)} />

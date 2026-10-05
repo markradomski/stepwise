@@ -44,6 +44,16 @@
   color: var(--color-caution);
 }
 
+.unrecognised {
+  --border-width: 2px;
+  border-style: dashed;
+  border-color: var(--color-text-muted);
+}
+
+.unrecognised .status {
+  color: var(--color-text-muted);
+}
+
 .system {
   border-color: var(--color-info);
   background: var(--color-info-bg);

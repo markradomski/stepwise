@@ -18,7 +18,13 @@ export function hasRepeatedFeedback(misconception: Misconception): boolean {
 }
 
 export function feedbackForResult(result: ValidationResult, state: PracticeState): Feedback | undefined {
-  if (result.kind === 'invalid') return { kind: 'error', message: 'Have another look at that step.' };
+  if (result.kind === 'unrecognised') {
+    return {
+      kind: 'neutral',
+      title: 'I can’t quite match that step yet.',
+      message: 'Check whether both sides still represent the same value.',
+    };
+  }
 
   if (result.kind === 'valid') {
     if (result.progression === 'direct') return undefined;

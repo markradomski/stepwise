@@ -2,7 +2,7 @@ import { MathExpression } from '../MathExpression/MathExpression';
 import { StatusIcon, type StatusIconKind } from '../StatusIcon/StatusIcon';
 import styles from './WorkingStep.module.css';
 
-export type WorkingStepStatus = 'accepted' | 'incorrect' | 'current';
+export type WorkingStepStatus = 'accepted' | 'incorrect' | 'unrecognised' | 'current';
 
 export type WorkingStepSource = 'learner' | 'system';
 
@@ -11,6 +11,7 @@ type Props = { expression: string; status: WorkingStepStatus; source?: WorkingSt
 const presentation: Record<WorkingStepStatus, { label: string; icon: StatusIconKind }> = {
   accepted: { label: 'Step accepted', icon: 'check' },
   incorrect: { label: 'Needs attention', icon: 'attention' },
+  unrecognised: { label: 'Not recognised yet', icon: 'note' },
   current: { label: 'Current step', icon: 'note' },
 };
 

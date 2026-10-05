@@ -1,5 +1,4 @@
 import { helpStatus } from './help';
-import { normaliseExpression } from './normalise';
 import { practiceQuestion } from './practiceQuestion';
 import { createInitialPracticeState, currentExpression, noHelp, type PracticeState } from './practiceState';
 import { nextStepFor } from './scaffolding';
@@ -38,7 +37,7 @@ export function practiceReducer(state: PracticeState, action: PracticeAction): P
           steps: [
             ...state.steps,
             {
-              expression: input,
+              expression: result.submittedExpression,
               canonicalExpression: result.canonicalExpression,
               status: 'accepted',
               source: 'learner',
@@ -47,7 +46,7 @@ export function practiceReducer(state: PracticeState, action: PracticeAction): P
           currentInput: '',
           attemptCount: 0,
           submissions,
-          activeMisconception: undefined,
+          helpSource: undefined,
           lastResult: result,
           rejectedExpression: undefined,
           help: noHelp,
@@ -60,19 +59,29 @@ export function practiceReducer(state: PracticeState, action: PracticeAction): P
         attemptCount: state.attemptCount + 1,
         submissions,
         lastResult: result,
-        rejectedExpression: normaliseExpression(input),
+        rejectedExpression: result.submittedExpression,
       };
 
-      if (result.kind === 'invalid') return rejected;
+      if (result.kind === 'unrecognised') {
+        const keepsMisconceptionHelp = state.helpSource?.kind === 'misconception';
+        return {
+          ...rejected,
+          helpSource: keepsMisconceptionHelp
+            ? state.helpSource
+            : { kind: 'fallback', canonicalExpression: currentExpression(state) },
+        };
+      }
 
+      const previous = state.helpSource;
+      const sameMisconception = previous?.kind === 'misconception' && previous.misconception === result.misconception;
       return {
         ...rejected,
         misconceptionCounts: {
           ...state.misconceptionCounts,
           [result.misconception]: (state.misconceptionCounts[result.misconception] ?? 0) + 1,
         },
-        activeMisconception: result.misconception,
-        help: state.activeMisconception === result.misconception ? state.help : noHelp,
+        helpSource: { kind: 'misconception', misconception: result.misconception },
+        help: sameMisconception ? state.help : noHelp,
       };
     }
 

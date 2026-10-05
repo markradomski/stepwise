@@ -6,7 +6,7 @@ import { learningStateFromPractice } from './inspectorState';
 import { practiceQuestion } from './practiceQuestion';
 import { practiceReducer, type PracticeAction } from './practiceReducer';
 import { createInitialPracticeState } from './practiceState';
-import { scaffolds } from './scaffolding';
+import { hintFor, scaffolds } from './scaffolding';
 
 type Props = { showInspector?: boolean };
 
@@ -26,16 +26,23 @@ export function PracticeView({ showInspector }: Props) {
   };
 
   const help = helpStatus(state);
-  const scaffold = state.activeMisconception && scaffolds[state.activeMisconception];
+  const example = state.helpSource?.kind === 'misconception' ? scaffolds[state.helpSource.misconception].example : undefined;
   const showingRejection = state.rejectedExpression !== undefined;
 
   const workingSteps = [
     ...state.steps.map((step) => ({
-      expression: step.canonicalExpression,
+      expression: step.expression,
       status: step.status,
       source: step.source,
     })),
-    ...(state.rejectedExpression ? [{ expression: state.rejectedExpression, status: 'incorrect' as const }] : []),
+    ...(state.rejectedExpression
+      ? [
+          {
+            expression: state.rejectedExpression,
+            status: state.lastResult?.kind === 'misconception' ? ('incorrect' as const) : ('unrecognised' as const),
+          },
+        ]
+      : []),
   ];
 
   const primaryAction = state.completed
@@ -68,8 +75,8 @@ export function PracticeView({ showInspector }: Props) {
             }
       }
       feedback={feedbackForState(state)}
-      hint={showingRejection && state.help.hintRequested ? scaffold?.hint : undefined}
-      example={showingRejection && state.help.exampleRequested ? scaffold?.example : undefined}
+      hint={showingRejection && state.help.hintRequested ? hintFor(state.helpSource) : undefined}
+      example={showingRejection && state.help.exampleRequested ? example : undefined}
       primaryAction={primaryAction}
       secondaryAction={secondaryAction}
       inspector={showInspector ? learningStateFromPractice(state) : undefined}

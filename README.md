@@ -22,6 +22,8 @@ The learner UI follows the Figma prototype. The default route is a working pract
 - deterministic validation, with no maths library or AI
 - multiple valid solution paths (distribute first, or divide first)
 - feedback for recognised misconceptions, with a stronger message when one repeats
+- recognition of simple equivalent forms, such as `(x + 2) = 18/3` or `x = 12/3`, while keeping the learner's own expression in the working
+- honest handling of uncertainty: a step it can't match is not called wrong, gets neutral wording and only a generic hint, and is never given a made-up diagnosis
 - progressive scaffolding: a hint, then a worked example, then a system-provided next step, each revealed only when the situation calls for it
 - a distinction between a correct answer and evidence of reasoning: a correct final answer that skips the working is acknowledged but doesn't complete the question
 

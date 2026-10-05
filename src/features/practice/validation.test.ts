@@ -9,23 +9,28 @@ describe('validateStep', () => {
     expect(check(initial, '3x + 6 = 18')).toEqual({
       kind: 'valid',
       progression: 'direct',
+      recognition: 'exact',
+      submittedExpression: '3x + 6 = 18',
       canonicalExpression: '3x + 6 = 18',
     });
   });
 
   it('accepts dividing both sides first', () => {
-    expect(check(initial, 'x + 2 = 6')).toEqual({
+    expect(check(initial, 'x + 2 = 6')).toMatchObject({
       kind: 'valid',
       progression: 'direct',
+      recognition: 'exact',
       canonicalExpression: 'x + 2 = 6',
     });
   });
 
   it('accepts whitespace and operator formatting variations', () => {
     for (const input of ['3x+6=18', '3x +6 =18', '3 x + 6 = 18', '3×x + 6 = 18']) {
-      expect(check(initial, input)).toEqual({
+      expect(check(initial, input)).toMatchObject({
         kind: 'valid',
         progression: 'direct',
+        recognition: 'exact',
+        submittedExpression: '3x + 6 = 18',
         canonicalExpression: '3x + 6 = 18',
       });
     }
@@ -42,7 +47,11 @@ describe('validateStep', () => {
   });
 
   it('recognises a correct final answer from the start as skipping steps', () => {
-    expect(check(initial, 'x = 4')).toEqual({ kind: 'valid', progression: 'skipped', canonicalExpression: 'x = 4' });
+    expect(check(initial, 'x = 4')).toMatchObject({
+      kind: 'valid',
+      progression: 'skipped',
+      canonicalExpression: 'x = 4',
+    });
     expect(check(initial, '3x = 12')).toMatchObject({ kind: 'valid', progression: 'skipped' });
     expect(check('3x + 6 = 18', 'x = 4')).toMatchObject({ kind: 'valid', progression: 'skipped' });
   });
@@ -54,28 +63,70 @@ describe('validateStep', () => {
   });
 
   it('recognises partial distribution', () => {
-    expect(check(initial, '3x + 2 = 18')).toEqual({ kind: 'misconception', misconception: 'PARTIAL_DISTRIBUTION' });
+    expect(check(initial, '3x + 2 = 18')).toEqual({
+      kind: 'misconception',
+      misconception: 'PARTIAL_DISTRIBUTION',
+      submittedExpression: '3x + 2 = 18',
+    });
     expect(check(initial, '3x+2=18').kind).toBe('misconception');
   });
 
   it('recognises an incorrect inverse operation', () => {
-    expect(check('3x + 6 = 18', '3x = 24')).toEqual({
+    expect(check('3x + 6 = 18', '3x = 24')).toMatchObject({
       kind: 'misconception',
       misconception: 'INCORRECT_INVERSE_OPERATION',
     });
   });
 
   it('recognises an arithmetic error', () => {
-    expect(check('3x = 12', 'x = 3')).toEqual({ kind: 'misconception', misconception: 'ARITHMETIC_ERROR' });
+    expect(check('3x = 12', 'x = 3')).toMatchObject({ kind: 'misconception', misconception: 'ARITHMETIC_ERROR' });
   });
 
   it('does not invent a misconception for unsupported steps', () => {
-    for (const input of ['x = 5', '2x + 4 = 18', 'banana', '3(x + 2) = 18', '']) {
-      expect(check(initial, input)).toEqual({ kind: 'invalid' });
+    for (const input of ['x = 5', '2x + 4 = 18', 'banana', '3(x + 2) = 18', '', '6 + 3x = 18', 'x = 12/0']) {
+      expect(check(initial, input).kind).toBe('unrecognised');
     }
   });
 
   it('only diagnoses a mistake from the expression it applies to', () => {
-    expect(check('3x = 12', '3x + 2 = 18')).toEqual({ kind: 'invalid' });
+    expect(check('3x = 12', '3x + 2 = 18').kind).toBe('unrecognised');
+  });
+
+  it('recognises equivalent arithmetic forms and preserves what was submitted', () => {
+    expect(check(initial, '(x + 2) = 18/3')).toEqual({
+      kind: 'valid',
+      progression: 'direct',
+      recognition: 'equivalent',
+      submittedExpression: '(x + 2) = 18/3',
+      canonicalExpression: 'x + 2 = 6',
+    });
+    expect(check(initial, 'x+2=18/3')).toMatchObject({
+      recognition: 'equivalent',
+      submittedExpression: 'x + 2 = 18/3',
+      canonicalExpression: 'x + 2 = 6',
+    });
+    expect(check('3x = 12', 'x = 12/3')).toMatchObject({
+      kind: 'valid',
+      progression: 'direct',
+      recognition: 'equivalent',
+      submittedExpression: 'x = 12/3',
+      canonicalExpression: 'x = 4',
+    });
+    expect(check('3x + 6 = 18', '3x = 18 - 6')).toMatchObject({ progression: 'direct', canonicalExpression: '3x = 12' });
+  });
+
+  it('keeps skipped-step behaviour for equivalent forms', () => {
+    expect(check(initial, 'x = 12/3')).toMatchObject({ progression: 'skipped', canonicalExpression: 'x = 4' });
+    expect(check('3x + 6 = 18', 'x = 8/2')).toMatchObject({ progression: 'skipped', recognition: 'equivalent' });
+  });
+
+  it('still prefers a recognised misconception over the fallback, including equivalent forms', () => {
+    expect(check('3x = 12', 'x = 9/3')).toMatchObject({ kind: 'misconception', misconception: 'ARITHMETIC_ERROR' });
+    expect(check(initial, '3x + 2 = 18')).toMatchObject({ kind: 'misconception' });
+  });
+
+  it('does not accept a different equation just because its arithmetic reduces', () => {
+    expect(check(initial, 'x + 2 = 18/2').kind).toBe('unrecognised');
+    expect(check(initial, '3(x + 2) = 6').kind).toBe('unrecognised');
   });
 });

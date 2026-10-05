@@ -2,7 +2,7 @@ import type { ExposureStatus } from '../../lib/learningState';
 import { hasRepeatedFeedback } from './feedback';
 import { practiceQuestion } from './practiceQuestion';
 import { currentExpression, type PracticeState } from './practiceState';
-import { nextStepFor, scaffolds } from './scaffolding';
+import { hintFor, nextStepFor, scaffolds } from './scaffolding';
 
 export type HelpAction = 'hint' | 'example' | 'nextStep';
 
@@ -20,19 +20,31 @@ export const helpActionLabels: Record<HelpAction, string> = {
   nextStep: 'Show next step',
 };
 
-// Everything here is derived from the diagnosis and what the learner has asked for.
-// Help attaches to the active misconception: a hint is the first rung, a worked
-// example opens once the hint is used or the mistake repeats, and revealing the
-// next step opens only after the example has been seen.
+const noHelpStatus: HelpStatus = { hint: 'hidden', example: 'hidden', nextStep: 'hidden', level: 0 };
+
+// Everything here is derived from the help source and what the learner has asked for.
+// Fallback help stops at a generic hint. Misconception help climbs from a hint to a
+// worked example (once the hint is used or the mistake repeats) and then to the next
+// step (once the example has been seen).
 export function helpStatus(state: PracticeState): HelpStatus {
-  const { activeMisconception, help } = state;
-  const scaffold = activeMisconception && scaffolds[activeMisconception];
-  if (!activeMisconception || !scaffold) {
-    return { hint: 'hidden', example: 'hidden', nextStep: 'hidden', level: 0 };
+  const { helpSource, help } = state;
+  if (!helpSource || hintFor(helpSource) === undefined) return noHelpStatus;
+
+  const canAsk = state.rejectedExpression !== undefined && !help.nextStepRevealed;
+
+  if (helpSource.kind === 'fallback') {
+    return {
+      hint: help.hintRequested ? 'visible' : 'available',
+      example: 'hidden',
+      nextStep: 'hidden',
+      level: 1,
+      action: canAsk && !help.hintRequested ? 'hint' : undefined,
+    };
   }
 
-  const repeated =
-    hasRepeatedFeedback(activeMisconception) && (state.misconceptionCounts[activeMisconception] ?? 0) > 1;
+  const { misconception } = helpSource;
+  const scaffold = scaffolds[misconception];
+  const repeated = hasRepeatedFeedback(misconception) && (state.misconceptionCounts[misconception] ?? 0) > 1;
   const escalated = help.hintRequested || repeated;
   const hasNextStep = Boolean(scaffold.example && nextStepFor(practiceQuestion, currentExpression(state)));
 
@@ -55,7 +67,7 @@ export function helpStatus(state: PracticeState): HelpStatus {
   const level = nextStep !== 'hidden' ? 3 : example !== 'hidden' ? 2 : 1;
 
   let action: HelpAction | undefined;
-  if (state.rejectedExpression !== undefined && !help.nextStepRevealed) {
+  if (canAsk) {
     if (nextStep === 'available') action = 'nextStep';
     else if (example === 'available') action = 'example';
     else if (!help.hintRequested && !help.exampleRequested && hint === 'available') action = 'hint';

@@ -3,6 +3,7 @@ import { helpStatus } from './help';
 import { learningStateFromPractice } from './inspectorState';
 import { practiceReducer, type PracticeAction } from './practiceReducer';
 import { createInitialPracticeState, type PracticeState } from './practiceState';
+import { hintFor } from './scaffolding';
 
 const apply = (state: PracticeState, ...actions: PracticeAction[]) =>
   actions.reduce((current, action) => practiceReducer(current, action), state);
@@ -42,9 +43,13 @@ describe('practiceReducer', () => {
     const state = run('banana');
     expect(state.attemptCount).toBe(1);
     expect(state.misconceptionCounts).toEqual({});
-    expect(state.activeMisconception).toBeUndefined();
-    expect(state.lastResult).toEqual({ kind: 'invalid' });
-    expect(feedbackForState(state)).toEqual({ kind: 'error', message: 'Have another look at that step.' });
+    expect(state.lastResult).toEqual({ kind: 'unrecognised', submittedExpression: 'banana' });
+    expect(state.helpSource).toEqual({ kind: 'fallback', canonicalExpression: '3(x + 2) = 18' });
+    expect(feedbackForState(state)).toEqual({
+      kind: 'neutral',
+      title: 'I can’t quite match that step yet.',
+      message: 'Check whether both sides still represent the same value.',
+    });
   });
 
   it('uses single-level feedback for the other recognised misconceptions', () => {
@@ -57,7 +62,7 @@ describe('practiceReducer', () => {
   it('clears the attempt and help state when a step is accepted after errors', () => {
     const state = run('3x + 2 = 18', '3x + 6 = 18');
     expect(state.attemptCount).toBe(0);
-    expect(state.activeMisconception).toBeUndefined();
+    expect(state.helpSource).toBeUndefined();
     expect(state.rejectedExpression).toBeUndefined();
     expect(state.misconceptionCounts).toEqual({ PARTIAL_DISTRIBUTION: 1 });
   });
@@ -186,7 +191,7 @@ describe('help scaffolding', () => {
 
     const next = submit(revealed, '3x = 12');
     expect(next.steps.map((step) => step.source)).toEqual(['system', 'learner']);
-    expect(next.activeMisconception).toBeUndefined();
+    expect(next.helpSource).toBeUndefined();
     expect(Object.values(learningStateFromPractice(next).exposure)).toEqual(Array(5).fill('hidden'));
   });
 
@@ -195,12 +200,6 @@ describe('help scaffolding', () => {
     expect(submit(submit(revealed, '3x = 12'), 'x = 4').completed).toBe(true);
   });
 
-  it('does not fabricate help for an undiagnosed invalid step', () => {
-    const state = run('banana');
-    expect(helpStatus(state)).toMatchObject({ hint: 'hidden', example: 'hidden', nextStep: 'hidden', level: 0 });
-    expect(helpStatus(state).action).toBeUndefined();
-    expect(requestHint(state)).toBe(state);
-  });
 
   it('keeps help for the diagnosed misconception after an unrecognised retry', () => {
     const state = run('3x + 2 = 18', 'banana');
@@ -228,6 +227,120 @@ describe('help scaffolding', () => {
   });
 });
 
+describe('equivalent forms', () => {
+  it('stores what the learner entered and progresses from the canonical expression', () => {
+    const state = run('(x+2)=18/3');
+    expect(state.steps).toEqual([
+      {
+        expression: '(x + 2) = 18/3',
+        canonicalExpression: 'x + 2 = 6',
+        status: 'accepted',
+        source: 'learner',
+      },
+    ]);
+    expect(state.misconceptionCounts).toEqual({});
+    expect(state.helpSource).toBeUndefined();
+    expect(state.rejectedExpression).toBeUndefined();
+    expect(feedbackForState(state)).toBeUndefined();
+    expect(submit(state, 'x = 4').completed).toBe(true);
+  });
+
+  it('completes when the final step is an unsimplified division', () => {
+    const state = run('3x + 6 = 18', '3x = 12', 'x = 12/3');
+    expect(state.completed).toBe(true);
+    expect(state.steps.at(-1)).toMatchObject({ expression: 'x = 12/3', canonicalExpression: 'x = 4' });
+  });
+
+  it('does not complete from an unsimplified final answer that skips steps', () => {
+    const state = run('x = 12/3');
+    expect(state.completed).toBe(false);
+    expect(state.steps).toHaveLength(0);
+    expect(feedbackForState(state)?.message).toBe('That answer is correct. Can you show one step that gets you there?');
+  });
+});
+
+describe('fallback help', () => {
+  it('records no misconception for unrecognised input', () => {
+    const state = run('6 + 3x = 18');
+    expect(state.misconceptionCounts).toEqual({});
+    expect(state.lastResult?.kind).toBe('unrecognised');
+    expect(state.attemptCount).toBe(1);
+    expect(learningStateFromPractice(state)).toMatchObject({ misconception: 'None', repeatedMisconceptionCount: 0 });
+  });
+
+  it('does not count repeated unrecognised steps as repeated misconceptions', () => {
+    const state = run('6 + 3x = 18', '6 + 3x = 18', 'banana');
+    expect(state.misconceptionCounts).toEqual({});
+    expect(helpStatus(state)).toMatchObject({ example: 'hidden', nextStep: 'hidden', level: 1 });
+  });
+
+  it('makes a generic hint available', () => {
+    expect(helpStatus(run('6 + 3x = 18'))).toEqual({
+      hint: 'available',
+      example: 'hidden',
+      nextStep: 'hidden',
+      level: 1,
+      action: 'hint',
+    });
+    expect(learningStateFromPractice(run('6 + 3x = 18')).exposure).toEqual({
+      mastery: 'hidden',
+      misconceptionLabel: 'hidden',
+      nextSolutionStep: 'hidden',
+      hint: 'available',
+      workedExample: 'hidden',
+    });
+  });
+
+  it('reveals the generic hint on request and stops there', () => {
+    const state = requestHint(run('6 + 3x = 18'));
+    expect(state.help.hintRequested).toBe(true);
+    expect(helpStatus(state)).toEqual({
+      hint: 'visible',
+      example: 'hidden',
+      nextStep: 'hidden',
+      level: 1,
+      action: undefined,
+    });
+    expect(requestExample(state)).toBe(state);
+    expect(requestNextStep(state)).toBe(state);
+    expect(learningStateFromPractice(state).exposure).toMatchObject({
+      hint: 'visible',
+      workedExample: 'hidden',
+      nextSolutionStep: 'hidden',
+    });
+  });
+
+  it('keeps the fallback hint tied to the current supported step', () => {
+    expect(hintFor(run('banana').helpSource)).toBe(
+      'Try making the equation simpler while doing the same thing to both sides.',
+    );
+    expect(hintFor(run('3x + 6 = 18', 'banana').helpSource)).toBe('Think about which operation would undo the +6.');
+    expect(hintFor(run('3x + 6 = 18', '3x = 12', 'banana').helpSource)).toBe(
+      'What operation would leave x on its own?',
+    );
+  });
+
+  it('is superseded by a recognised misconception, which then gets its own help', () => {
+    const state = run('banana', '3x + 2 = 18');
+    expect(state.helpSource).toEqual({ kind: 'misconception', misconception: 'PARTIAL_DISTRIBUTION' });
+    expect(state.help).toEqual({ hintRequested: false, exampleRequested: false, nextStepRevealed: false });
+    expect(hintFor(state.helpSource)).toBe('The 3 applies to everything inside the brackets.');
+  });
+
+  it('is cleared when the learner returns to a supported step', () => {
+    const state = run('banana', '3x + 6 = 18');
+    expect(state.helpSource).toBeUndefined();
+    expect(helpStatus(state).level).toBe(0);
+    expect(Object.values(learningStateFromPractice(state).exposure)).toEqual(Array(5).fill('hidden'));
+  });
+
+  it('does not let a diagnosed misconception be replaced by fallback help', () => {
+    const state = run('3x + 2 = 18', 'banana');
+    expect(state.helpSource).toEqual({ kind: 'misconception', misconception: 'PARTIAL_DISTRIBUTION' });
+    expect(state.misconceptionCounts).toEqual({ PARTIAL_DISTRIBUTION: 1 });
+  });
+});
+
 describe('inspector state', () => {
   it('reports hint level and intervention from the help state', () => {
     const levelOne = learningStateFromPractice(run('3x + 2 = 18'));
@@ -238,6 +351,35 @@ describe('inspector state', () => {
     const repeated = learningStateFromPractice(run('3x + 2 = 18', '3x + 2 = 18'));
     expect(repeated.repeatedMisconceptionCount).toBe(2);
     expect(repeated.intervention).toBe('Concept reminder');
+  });
+
+  it('distinguishes exact, equivalent and unrecognised steps', () => {
+    expect(learningStateFromPractice(run('3x + 6 = 18'))).toMatchObject({
+      lastValidation: 'Valid, direct',
+      recognition: 'Exact match',
+      submittedExpression: undefined,
+      helpSource: 'None',
+    });
+
+    expect(learningStateFromPractice(run('(x + 2) = 18/3'))).toMatchObject({
+      lastValidation: 'Valid, direct',
+      recognition: 'Equivalent form',
+      submittedExpression: '(x + 2) = 18/3',
+      canonicalExpression: 'x + 2 = 6',
+    });
+
+    expect(learningStateFromPractice(run('6 + 3x = 18'))).toMatchObject({
+      lastValidation: 'Unrecognised',
+      intervention: 'Generic prompt',
+      recognition: undefined,
+      misconception: 'None',
+      helpSource: 'Generic',
+    });
+
+    expect(learningStateFromPractice(run('3x + 2 = 18'))).toMatchObject({
+      lastValidation: 'Misconception',
+      helpSource: 'Misconception',
+    });
   });
 
   it('keeps everything hidden before any error', () => {
