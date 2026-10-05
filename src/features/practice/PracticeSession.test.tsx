@@ -65,7 +65,7 @@ describe('three-question session', () => {
     await solve('x + 2 = 6', 'x = 4');
     await press('Next question');
     await solve('2x = 12', 'x = 6');
-    expect(status()).toHaveTextContent('x = 6 makes both sides equal 17.');
+    expect(status()).toHaveTextContent('Question complete');
     await press('Next question');
     expect(heading()).toHaveTextContent('Question 3 of 3');
     expect(screen.getByRole('math', { name: '4(x - 1) = 20' })).toBeInTheDocument();
@@ -173,7 +173,7 @@ describe('help across questions', () => {
     expect(screen.getByText('Suggested next step')).toBeInTheDocument();
     expect(screen.getByRole('math', { name: '2x = 12' })).toBeInTheDocument();
     await solve('x = 6');
-    expect(status()).toHaveTextContent('x = 6 makes both sides equal 17.');
+    expect(status()).toHaveTextContent('Question complete');
   });
 
   it('gives Question 3 the 4-specific partial-distribution help', async () => {

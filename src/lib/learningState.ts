@@ -18,6 +18,7 @@ export type LearningState = {
   session?: SessionState;
   strategy: string;
   attempt: number;
+  questionStatus?: string;
   lastValidation?: string;
   recognition?: string;
   simplification?: string;

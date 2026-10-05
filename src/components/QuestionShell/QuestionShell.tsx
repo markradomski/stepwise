@@ -2,7 +2,7 @@ import { Progress } from '../Progress/Progress';
 import styles from './QuestionShell.module.css';
 
 type Props = {
-  progress?: { currentQuestion: number; totalQuestions: number; complete?: boolean };
+  progress?: { currentQuestion: number; totalQuestions: number };
   question: { instruction: string };
 };
 

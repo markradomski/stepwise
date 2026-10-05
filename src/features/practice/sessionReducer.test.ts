@@ -59,6 +59,15 @@ describe('session reducer', () => {
     });
   });
 
+  it('records a completed question once, before moving on, and not again afterwards', () => {
+    const done = solveQuestion1(createInitialSession());
+    expect(done.results).toHaveLength(1);
+    const advanced = next(done);
+    expect(advanced.results).toHaveLength(1);
+    expect(advanced.masteryEstimate).toBe(done.masteryEstimate);
+    expect(next(advanced)).toBe(advanced);
+  });
+
   it('keeps session metrics across questions', () => {
     const advanced = next(solveQuestion1(createInitialSession()));
     expect(advanced.results).toHaveLength(1);

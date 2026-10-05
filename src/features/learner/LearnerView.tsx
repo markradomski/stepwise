@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react';
 import { Button } from '../../components/Button/Button';
+import { CompletionPanel } from '../../components/CompletionPanel/CompletionPanel';
 import { FeedbackMessage, type FeedbackKind } from '../../components/FeedbackMessage/FeedbackMessage';
 import { HintAction } from '../../components/HintAction/HintAction';
 import { InteractionGuide } from '../../components/InteractionGuide/InteractionGuide';
@@ -12,7 +12,7 @@ import type { LearningState } from '../../lib/learningState';
 import styles from './LearnerView.module.css';
 
 export type LearnerViewProps = {
-  progress?: { currentQuestion: number; totalQuestions: number; complete?: boolean };
+  progress?: { currentQuestion: number; totalQuestions: number };
   question: { instruction: string; expression: string };
   workingSteps: Array<{ expression: string; status: WorkingStepStatus; source?: WorkingStepSource }>;
   input?: {
@@ -25,7 +25,8 @@ export type LearnerViewProps = {
   feedback?: { kind: FeedbackKind; title?: string; message: string };
   hint?: string;
   example?: { before: string; after: string; explanation: string };
-  primaryAction?: { label: string; disabled?: boolean; onClick?: () => void; focusKey?: number };
+  primaryAction?: { label: string; disabled?: boolean; onClick?: () => void };
+  completion?: { title: string; message: string; actionLabel: string; onAction?: () => void; focusKey?: number };
   secondaryAction?: { label: string; onClick?: () => void };
   inspector?: LearningState;
   preview?: boolean;
@@ -41,6 +42,7 @@ export function LearnerView({
   hint,
   example,
   primaryAction,
+  completion,
   secondaryAction,
   inspector,
   preview,
@@ -51,16 +53,6 @@ export function LearnerView({
   const lines: LearnerViewProps['workingSteps'] = [{ expression: question.expression, status: 'given' }, ...workingSteps];
   const latestLine = lines.map((line) => line.status === 'given' || line.status === 'accepted').lastIndexOf(true);
   const hasAcceptedWork = workingSteps.some((step) => step.status === 'accepted');
-  const primaryRef = useRef<HTMLButtonElement>(null);
-  const primaryFocusKey = primaryAction?.focusKey ?? 0;
-
-  // Deferred so the Enter keypress that completed the question can't also activate the new button.
-  useEffect(() => {
-    if (primaryFocusKey === 0) return;
-    const timer = setTimeout(() => primaryRef.current?.focus());
-    return () => clearTimeout(timer);
-  }, [primaryFocusKey]);
-
   return (
     <div className={`${styles.stage} ${inspector ? styles.withInspector : ''}`}>
       <main className={styles.column}>
@@ -79,6 +71,7 @@ export function LearnerView({
             {feedback && <FeedbackMessage {...feedback} />}
             {hint && <FeedbackMessage kind="hint" title="Hint" message={hint} />}
             {example && <WorkedExample {...example} />}
+            {completion && <CompletionPanel {...completion} preview={preview} />}
           </div>
           {input && (
             <MathInput
@@ -92,7 +85,6 @@ export function LearnerView({
             <div className={styles.actions}>
               {primaryAction && (
                 <Button
-                  buttonRef={primaryRef}
                   disabled={preview || primaryAction.disabled}
                   preview={preview}
                   onClick={primaryAction.onClick}

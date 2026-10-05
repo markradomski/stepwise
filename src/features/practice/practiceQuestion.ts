@@ -18,5 +18,4 @@ export type PracticeQuestion = {
   misconceptions: Partial<Record<Misconception, MisconceptionContent>>;
   genericHints: Record<string, string>;
   strategies: Record<string, string>;
-  solvedMessage: string;
 };

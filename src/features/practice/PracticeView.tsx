@@ -59,12 +59,26 @@ export function PracticeView({ showInspector }: Props) {
       : []),
   ];
 
-  const completedAction = session.completed
-    ? { label: 'Practice again', onClick: () => act({ type: 'PRACTICE_AGAIN' }) }
-    : { label: 'Next question', onClick: () => act({ type: 'NEXT_QUESTION' }) };
+  const completion = practice.completed
+    ? session.completed
+      ? {
+          title: 'Practice complete',
+          message: `You finished all ${practiceQuestions.length} questions.`,
+          actionLabel: 'Practice again',
+          onAction: () => act({ type: 'PRACTICE_AGAIN' }),
+          focusKey: focusRequest,
+        }
+      : {
+          title: 'Question complete',
+          message: 'You finished this question.',
+          actionLabel: 'Next question',
+          onAction: () => act({ type: 'NEXT_QUESTION' }),
+          focusKey: focusRequest,
+        }
+    : undefined;
 
   const primaryAction = practice.completed
-    ? { ...completedAction, focusKey: focusRequest }
+    ? undefined
     : {
         label: 'Check step',
         disabled: practice.currentInput.trim() === '',
@@ -81,7 +95,6 @@ export function PracticeView({ showInspector }: Props) {
       progress={{
         currentQuestion: currentQuestionIndex + 1,
         totalQuestions: practiceQuestions.length,
-        complete: practice.completed,
       }}
       question={{ instruction: question.instruction, expression: question.initialExpression }}
       guideOpen={currentQuestionIndex === 0 && practice.steps.length === 0}
@@ -100,6 +113,7 @@ export function PracticeView({ showInspector }: Props) {
       hint={showingHelp && practice.help.hintRequested ? hintFor(question, practice.helpSource) : undefined}
       example={showingHelp && practice.help.exampleRequested ? example : undefined}
       primaryAction={primaryAction}
+      completion={completion}
       secondaryAction={secondaryAction}
       inspector={showInspector ? learningStateFromSession(session) : undefined}
     />

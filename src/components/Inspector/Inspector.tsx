@@ -20,6 +20,7 @@ export function Inspector({ state }: Props) {
           {state.currentExpression && <LearningStateRow label="Current expression" value={state.currentExpression} />}
           <LearningStateRow label="Current strategy" value={state.strategy} />
           <LearningStateRow label="Attempt" value={String(state.attempt)} />
+          {state.questionStatus && <LearningStateRow label="Question status" value={state.questionStatus} />}
           {state.lastValidation && <LearningStateRow label="Last validation" value={state.lastValidation} />}
           {state.recognition && <LearningStateRow label="Recognition" value={state.recognition} />}
           {state.simplification && <LearningStateRow label="Simplification" value={state.simplification} />}

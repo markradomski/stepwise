@@ -81,7 +81,7 @@ describe('practiceReducer', () => {
     expect(distribute.completed).toBe(true);
     expect(distribute.steps.map((step) => step.canonicalExpression)).toEqual(['3x + 6 = 18', '3x = 12', 'x = 4']);
     expect(learningStateFromPractice(distribute).strategy).toBe('Distribution');
-    expect(feedbackForState(distribute)?.kind).toBe('success');
+    expect(feedbackForState(distribute)).toBeUndefined();
 
     const divide = run('x + 2 = 6', 'x = 4');
     expect(divide.completed).toBe(true);
@@ -300,8 +300,7 @@ describe('simplification guidance', () => {
   it('does not hold back completion for an unsimplified final answer', () => {
     const state = run('3x + 6 = 18', '3x = 12', 'x = 12/3');
     expect(state.completed).toBe(true);
-    expect(feedbackForState(state)?.kind).toBe('success');
-    expect(feedbackForState(state)?.title).toBe('Solved');
+    expect(feedbackForState(state)).toBeUndefined();
   });
 
   it('guides a simplification of a subtraction too', () => {

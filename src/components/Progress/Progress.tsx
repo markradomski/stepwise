@@ -1,12 +1,9 @@
-import styles from './Progress.module.css';
+type Props = { currentQuestion: number; totalQuestions: number };
 
-type Props = { currentQuestion: number; totalQuestions: number; complete?: boolean };
-
-export function Progress({ currentQuestion, totalQuestions, complete }: Props) {
+export function Progress({ currentQuestion, totalQuestions }: Props) {
   return (
     <>
       Question {currentQuestion} of {totalQuestions}
-      {complete && <span className={styles.complete}> · complete</span>}
     </>
   );
 }

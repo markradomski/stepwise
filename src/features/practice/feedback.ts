@@ -1,5 +1,4 @@
 import type { PracticeState } from './practiceState';
-import { practiceQuestions } from './questions';
 import type { PracticeSessionState } from './sessionState';
 import { contentFor } from './scaffolding';
 import type { Misconception, ValidationResult } from './validation';
@@ -41,17 +40,10 @@ export function feedbackForResult(result: ValidationResult, state: PracticeState
 }
 
 export function feedbackForState(state: PracticeState): Feedback | undefined {
-  if (state.completed) return { kind: 'success', title: 'Solved', message: state.question.solvedMessage };
+  if (state.completed) return undefined;
   return state.lastResult ? feedbackForResult(state.lastResult, state) : undefined;
 }
 
 export function feedbackForSession(session: PracticeSessionState): Feedback | undefined {
-  if (session.completed) {
-    return {
-      kind: 'success',
-      title: 'Practice complete',
-      message: `You finished all ${practiceQuestions.length} questions.`,
-    };
-  }
   return feedbackForState(session.currentPractice);
 }

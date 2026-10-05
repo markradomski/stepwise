@@ -36,6 +36,7 @@ export function learningStateFromPractice(state: PracticeState): LearningState {
   return {
     concept: 'Linear equations',
     currentExpression: currentExpression(state),
+    questionStatus: state.completed ? 'Complete' : 'In progress',
     strategy: strategyFor(state),
     attempt: state.attemptCount,
     lastValidation: validationLabel(state.lastResult),

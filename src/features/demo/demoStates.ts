@@ -6,11 +6,12 @@ export type DemoState = {
   id: string;
   title: string;
   shortTitle: string;
-  progress: { currentQuestion: number; totalQuestions: number; complete?: boolean };
+  progress: { currentQuestion: number; totalQuestions: number };
   question: { instruction: string; expression: string };
   workingSteps: Array<{ expression: string; status: WorkingStepStatus }>;
   input?: { value: string; state: 'empty' | 'focused' };
   feedback?: { kind: FeedbackKind; title?: string; message: string };
+  completion?: { title: string; message: string; actionLabel: string };
   primaryAction?: { label: string; disabled?: boolean };
   secondaryAction?: { label: string };
   completed?: boolean;
@@ -78,14 +79,12 @@ export const demoStates: DemoState[] = [
     id: '05',
     shortTitle: 'Complete',
     title: 'Completed question',
-    progress: { currentQuestion: 2, totalQuestions: 3, complete: true },
     workingSteps: [
       { expression: '3x + 6 = 18', status: 'accepted' },
       { expression: '3x = 12', status: 'accepted' },
       { expression: 'x = 4', status: 'accepted' },
     ],
-    feedback: { kind: 'success', title: 'Solved', message: 'x = 4 makes both sides equal 18.' },
-    primaryAction: { label: 'Next question' },
+    completion: { title: 'Question complete', message: 'You finished this question.', actionLabel: 'Next question' },
     completed: true,
   },
   {

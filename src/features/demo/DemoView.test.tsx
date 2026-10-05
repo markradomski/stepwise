@@ -77,8 +77,9 @@ describe('completed question', () => {
   it('shows completion without a mastery percentage', () => {
     renderState('05');
     expect(screen.getByText(/Question 2 of 3/)).toBeInTheDocument();
-    expect(screen.getByText(/complete/)).toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent('Solved');
+    expect(screen.getByText('Question complete')).toBeInTheDocument();
+    expect(screen.getByText('You finished this question.')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Question complete');
     expect(screen.getAllByText('Step accepted')).toHaveLength(3);
     expect(screen.queryByText(/mastery|%/i)).not.toBeInTheDocument();
   });

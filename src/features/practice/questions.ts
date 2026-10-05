@@ -53,7 +53,6 @@ const bracketsAdded: PracticeQuestion = {
     '3x = 12': isolateHint,
   },
   strategies: { '3x + 6 = 18': 'Distribution', 'x + 2 = 6': 'Divide first' },
-  solvedMessage: 'x = 4 makes both sides equal 18.',
 };
 
 const twoStep: PracticeQuestion = {
@@ -86,7 +85,6 @@ const twoStep: PracticeQuestion = {
     '2x = 12': isolateHint,
   },
   strategies: { '2x = 12': 'Subtract, then divide' },
-  solvedMessage: 'x = 6 makes both sides equal 17.',
 };
 
 const bracketsSubtracted: PracticeQuestion = {
@@ -136,7 +134,6 @@ const bracketsSubtracted: PracticeQuestion = {
     '4x = 24': isolateHint,
   },
   strategies: { '4x - 4 = 20': 'Distribution', 'x - 1 = 5': 'Divide first' },
-  solvedMessage: 'x = 6 makes both sides equal 20.',
 };
 
 export const practiceQuestions: PracticeQuestion[] = [bracketsAdded, twoStep, bracketsSubtracted];

@@ -134,7 +134,7 @@ describe('guided simplification', () => {
     expect(screen.getByRole('math', { name: 'x + 2 = 6' })).toBeInTheDocument();
 
     await submit('x = 4');
-    expect(status()).toHaveTextContent('Solved');
+    expect(status()).toHaveTextContent('Question complete');
     expect(within(screen.getByRole('list', { name: 'Working so far' })).getAllByRole('listitem')).toHaveLength(4);
   });
 
@@ -218,7 +218,7 @@ describe('practice interaction', () => {
     const { submit } = setup();
     for (const step of steps) await submit(step);
     expect(screen.getByRole('heading', { level: 2, name: /Question 1 of 3/ })).toBeInTheDocument();
-    expect(status()).toHaveTextContent('Solved');
+    expect(status()).toHaveTextContent('Question complete');
     expect(screen.getAllByText('Step accepted')).toHaveLength(count);
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
     expect(screen.queryByText(/mastery|%/i)).not.toBeInTheDocument();
@@ -242,7 +242,7 @@ describe('equivalent forms', () => {
     expect(input()).toHaveFocus();
 
     await submit('x = 4');
-    expect(status()).toHaveTextContent('Solved');
+    expect(status()).toHaveTextContent('Question complete');
     expect(screen.getByRole('math', { name: '(x + 2) = 18/3' })).toBeInTheDocument();
   });
 
@@ -251,7 +251,7 @@ describe('equivalent forms', () => {
     await submit('3x + 6 = 18');
     await submit('3x = 12');
     await submit('x = 12/3');
-    expect(status()).toHaveTextContent('Solved');
+    expect(status()).toHaveTextContent('Question complete');
     expect(screen.getByRole('math', { name: 'x = 12/3' })).toBeInTheDocument();
     expect(screen.getAllByText('Step accepted')).toHaveLength(3);
   });
@@ -383,7 +383,7 @@ describe('progressive help', () => {
 
     await submit('3x = 12');
     await submit('x = 4');
-    expect(status()).toHaveTextContent('Solved');
+    expect(status()).toHaveTextContent('Question complete');
     expect(screen.getByText('Suggested next step')).toBeInTheDocument();
     expect(screen.getAllByText('Step accepted')).toHaveLength(2);
   });
@@ -393,14 +393,14 @@ describe('progressive help', () => {
     await submit('x = 4');
     expect(status()).toHaveTextContent('That answer is correct. Can you show one step that gets you there?');
     expect(screen.queryByText('Needs attention')).not.toBeInTheDocument();
-    expect(screen.queryByText('Solved')).not.toBeInTheDocument();
+    expect(screen.queryByText('Question complete')).not.toBeInTheDocument();
     expect(within(screen.getByRole('list', { name: 'Working so far' })).getAllByRole('listitem')).toHaveLength(1);
     expect(input()).toBeInTheDocument();
     expect(input()).toHaveFocus();
 
     await submit('x + 2 = 6');
     await submit('x = 4');
-    expect(status()).toHaveTextContent('Solved');
+    expect(status()).toHaveTextContent('Question complete');
   });
 
   it('keeps diagnostic and system language out of the learner UI', async () => {
@@ -432,7 +432,7 @@ describe('completing a question', () => {
     await user.type(input(), 'x + 2 = 6{Enter}');
     await user.type(input(), 'x = 4{Enter}');
     await waitFor(() => expect(screen.getByRole('button', { name: 'Next question' })).toHaveFocus());
-    expect(status()).toHaveTextContent('Solved');
+    expect(status()).toHaveTextContent('Question complete');
     expect(screen.getByRole('heading', { level: 2, name: /Question 1 of 3/ })).toBeInTheDocument();
     expect(screen.getAllByText('Step accepted')).toHaveLength(2);
   });
