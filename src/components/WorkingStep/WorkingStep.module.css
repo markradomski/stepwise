@@ -43,3 +43,12 @@
 .incorrect .status {
   color: var(--color-caution);
 }
+
+.system {
+  border-color: var(--color-info);
+  background: var(--color-info-bg);
+}
+
+.system .status {
+  color: var(--color-info);
+}

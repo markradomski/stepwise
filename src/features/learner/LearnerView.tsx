@@ -1,17 +1,19 @@
+import { useEffect, useRef } from 'react';
 import { Button } from '../../components/Button/Button';
 import { FeedbackMessage, type FeedbackKind } from '../../components/FeedbackMessage/FeedbackMessage';
 import { HintAction } from '../../components/HintAction/HintAction';
 import { Inspector } from '../../components/Inspector/Inspector';
 import { MathInput } from '../../components/MathInput/MathInput';
 import { QuestionShell } from '../../components/QuestionShell/QuestionShell';
-import { WorkingStep, type WorkingStepStatus } from '../../components/WorkingStep/WorkingStep';
+import { WorkedExample } from '../../components/WorkedExample/WorkedExample';
+import { WorkingStep, type WorkingStepSource, type WorkingStepStatus } from '../../components/WorkingStep/WorkingStep';
 import type { LearningState } from '../../lib/learningState';
 import styles from './LearnerView.module.css';
 
 export type LearnerViewProps = {
   progress: { current: number; total: number; complete?: boolean };
   question: { instruction: string; expression: string };
-  workingSteps: Array<{ expression: string; status: WorkingStepStatus }>;
+  workingSteps: Array<{ expression: string; status: WorkingStepStatus; source?: WorkingStepSource }>;
   input?: {
     value: string;
     focused?: boolean;
@@ -20,8 +22,10 @@ export type LearnerViewProps = {
     onSubmit?: () => void;
   };
   feedback?: { kind: FeedbackKind; title?: string; message: string };
-  primaryAction?: { label: string; disabled?: boolean; onClick?: () => void };
-  secondaryAction?: { label: string; emphasis?: 'quiet' | 'prominent' };
+  hint?: string;
+  example?: { before: string; after: string; explanation: string };
+  primaryAction?: { label: string; disabled?: boolean; onClick?: () => void; focusKey?: number };
+  secondaryAction?: { label: string; emphasis?: 'quiet' | 'prominent'; onClick?: () => void };
   inspector?: LearningState;
 };
 
@@ -31,11 +35,22 @@ export function LearnerView({
   workingSteps,
   input,
   feedback,
+  hint,
+  example,
   primaryAction,
   secondaryAction,
   inspector,
 }: LearnerViewProps) {
   const lastStepIncorrect = workingSteps.at(-1)?.status === 'incorrect';
+  const primaryRef = useRef<HTMLButtonElement>(null);
+  const primaryFocusKey = primaryAction?.focusKey ?? 0;
+
+  // Deferred so the Enter keypress that completed the question can't also activate the new button.
+  useEffect(() => {
+    if (primaryFocusKey === 0) return;
+    const timer = setTimeout(() => primaryRef.current?.focus());
+    return () => clearTimeout(timer);
+  }, [primaryFocusKey]);
 
   return (
     <div className={`${styles.stage} ${inspector ? styles.withInspector : ''}`}>
@@ -54,6 +69,8 @@ export function LearnerView({
           )}
           <div role="status" className={`${styles.feedbackSlot} ${lastStepIncorrect ? styles.attached : ''}`}>
             {feedback && <FeedbackMessage {...feedback} />}
+            {hint && <FeedbackMessage kind="hint" title="Hint" message={hint} />}
+            {example && <WorkedExample {...example} />}
           </div>
           {input && (
             <MathInput
@@ -66,11 +83,11 @@ export function LearnerView({
           {(primaryAction || secondaryAction) && (
             <div className={styles.actions}>
               {primaryAction && (
-                <Button disabled={primaryAction.disabled} onClick={primaryAction.onClick}>
+                <Button buttonRef={primaryRef} disabled={primaryAction.disabled} onClick={primaryAction.onClick}>
                   {primaryAction.label}
                 </Button>
               )}
-              {secondaryAction && <HintAction label={secondaryAction.label} emphasis={secondaryAction.emphasis} />}
+              {secondaryAction && <HintAction {...secondaryAction} />}
             </div>
           )}
         </section>

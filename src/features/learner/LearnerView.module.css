@@ -74,6 +74,7 @@
   .column {
     gap: var(--space-6);
     padding-top: var(--space-5);
+    padding-bottom: 8rem;
   }
 
   .actions {

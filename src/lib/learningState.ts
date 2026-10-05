@@ -4,6 +4,7 @@ export type LearningState = {
   concept: string;
   strategy: string;
   attempt: number;
+  lastValidation?: string;
   misconception: string;
   repeatedMisconceptionCount: number;
   hintLevel: { current: number; max: number };

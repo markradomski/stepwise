@@ -1,7 +1,8 @@
+import { practiceQuestion } from './practiceQuestion';
 import type { PracticeState } from './practiceState';
 import type { Misconception, ValidationResult } from './validation';
 
-export type Feedback = { kind: 'error' | 'success'; title?: string; message: string };
+export type Feedback = { kind: 'error' | 'success' | 'neutral'; title?: string; message: string };
 
 const misconceptionCopy: Record<Misconception, { first: string; repeated?: string }> = {
   PARTIAL_DISTRIBUTION: {
@@ -12,9 +13,23 @@ const misconceptionCopy: Record<Misconception, { first: string; repeated?: strin
   ARITHMETIC_ERROR: { first: 'Check the arithmetic in your last step.' },
 };
 
+export function hasRepeatedFeedback(misconception: Misconception): boolean {
+  return Boolean(misconceptionCopy[misconception].repeated);
+}
+
 export function feedbackForResult(result: ValidationResult, state: PracticeState): Feedback | undefined {
-  if (result.kind === 'valid') return undefined;
   if (result.kind === 'invalid') return { kind: 'error', message: 'Have another look at that step.' };
+
+  if (result.kind === 'valid') {
+    if (result.progression === 'direct') return undefined;
+    return {
+      kind: 'neutral',
+      message:
+        result.canonicalExpression === practiceQuestion.goal
+          ? 'That answer is correct. Can you show one step that gets you there?'
+          : 'That step works. Can you show one step that gets you there?',
+    };
+  }
 
   const copy = misconceptionCopy[result.misconception];
   const repeated = (state.misconceptionCounts[result.misconception] ?? 0) > 1;

@@ -19,6 +19,7 @@ export function Inspector({ state }: Props) {
           <LearningStateRow label="Concept" value={state.concept} />
           <LearningStateRow label="Current strategy" value={state.strategy} />
           <LearningStateRow label="Attempt" value={String(state.attempt)} />
+          {state.lastValidation && <LearningStateRow label="Last validation" value={state.lastValidation} />}
           <LearningStateRow label="Detected misconception" value={state.misconception} />
           <LearningStateRow label="Repeated misconception count" value={String(state.repeatedMisconceptionCount)} />
           <LearningStateRow label="Hint level" value={`${state.hintLevel.current} / ${state.hintLevel.max}`} />

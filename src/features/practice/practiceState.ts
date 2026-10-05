@@ -1,11 +1,22 @@
 import { practiceQuestion } from './practiceQuestion';
 import type { Misconception, ValidationResult } from './validation';
 
+export type StepSource = 'learner' | 'system';
+
 export type PracticeStep = {
   expression: string;
   canonicalExpression: string;
   status: 'accepted';
+  source: StepSource;
 };
+
+export type HelpState = {
+  hintRequested: boolean;
+  exampleRequested: boolean;
+  nextStepRevealed: boolean;
+};
+
+export const noHelp: HelpState = { hintRequested: false, exampleRequested: false, nextStepRevealed: false };
 
 export type PracticeState = {
   questionId: string;
@@ -14,9 +25,10 @@ export type PracticeState = {
   attemptCount: number;
   submissions: number;
   misconceptionCounts: Partial<Record<Misconception, number>>;
+  activeMisconception?: Misconception;
   lastResult?: ValidationResult;
   rejectedExpression?: string;
-  hintLevel: number;
+  help: HelpState;
   completed: boolean;
 };
 
@@ -28,7 +40,7 @@ export function createInitialPracticeState(): PracticeState {
     attemptCount: 0,
     submissions: 0,
     misconceptionCounts: {},
-    hintLevel: 0,
+    help: noHelp,
     completed: false,
   };
 }

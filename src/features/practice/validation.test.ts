@@ -6,27 +6,51 @@ const check = (from: string, input: string) => validateStep(practiceQuestion, fr
 
 describe('validateStep', () => {
   it('accepts distributing the bracket', () => {
-    expect(check(initial, '3x + 6 = 18')).toEqual({ kind: 'valid', canonicalExpression: '3x + 6 = 18' });
+    expect(check(initial, '3x + 6 = 18')).toEqual({
+      kind: 'valid',
+      progression: 'direct',
+      canonicalExpression: '3x + 6 = 18',
+    });
   });
 
   it('accepts dividing both sides first', () => {
-    expect(check(initial, 'x + 2 = 6')).toEqual({ kind: 'valid', canonicalExpression: 'x + 2 = 6' });
+    expect(check(initial, 'x + 2 = 6')).toEqual({
+      kind: 'valid',
+      progression: 'direct',
+      canonicalExpression: 'x + 2 = 6',
+    });
   });
 
   it('accepts whitespace and operator formatting variations', () => {
     for (const input of ['3x+6=18', '3x +6 =18', '3 x + 6 = 18', '3×x + 6 = 18']) {
-      expect(check(initial, input)).toEqual({ kind: 'valid', canonicalExpression: '3x + 6 = 18' });
+      expect(check(initial, input)).toEqual({
+        kind: 'valid',
+        progression: 'direct',
+        canonicalExpression: '3x + 6 = 18',
+      });
     }
   });
 
-  it('accepts each later step on both paths', () => {
-    expect(check('3x + 6 = 18', '3x = 12').kind).toBe('valid');
-    expect(check('3x = 12', 'x = 4').kind).toBe('valid');
-    expect(check('x + 2 = 6', 'x = 4').kind).toBe('valid');
+  it('accepts each later step on both paths as a direct step', () => {
+    for (const [from, input] of [
+      ['3x + 6 = 18', '3x = 12'],
+      ['3x = 12', 'x = 4'],
+      ['x + 2 = 6', 'x = 4'],
+    ]) {
+      expect(check(from, input)).toMatchObject({ kind: 'valid', progression: 'direct' });
+    }
   });
 
-  it('accepts a valid step that skips ahead', () => {
-    expect(check('3x + 6 = 18', 'x = 4').kind).toBe('valid');
+  it('recognises a correct final answer from the start as skipping steps', () => {
+    expect(check(initial, 'x = 4')).toEqual({ kind: 'valid', progression: 'skipped', canonicalExpression: 'x = 4' });
+    expect(check(initial, '3x = 12')).toMatchObject({ kind: 'valid', progression: 'skipped' });
+    expect(check('3x + 6 = 18', 'x = 4')).toMatchObject({ kind: 'valid', progression: 'skipped' });
+  });
+
+  it('does not treat a skipped step as a misconception or an invalid step', () => {
+    const result = check(initial, 'x = 4');
+    expect(result.kind).toBe('valid');
+    expect(result).not.toHaveProperty('misconception');
   });
 
   it('recognises partial distribution', () => {
