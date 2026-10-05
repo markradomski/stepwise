@@ -256,6 +256,48 @@ export const demoStates: DemoState[] = [
   },
 ];
 
+const suggestedExplained = demoStates.find((state) => state.id === '14') as DemoState;
+const inspectorFixture = demoStates.find((state) => state.id === '06')?.inspector;
+
+demoStates.push(
+  {
+    ...baseState,
+    id: '16',
+    shortTitle: 'Unrecognised',
+    title: 'Unrecognised step',
+    workingSteps: [{ expression: '6 + 3x = 18', status: 'unrecognised' }],
+    feedback: {
+      kind: 'neutral',
+      title: 'I can’t quite match that step yet.',
+      message: 'Check whether both sides still represent the same value.',
+    },
+    input: { value: '6 + 3x = 18', state: 'empty' },
+    primaryAction: { label: 'Check step' },
+    help: { launcherLabel: 'Need help?' },
+  },
+  {
+    ...suggestedExplained,
+    id: '17',
+    shortTitle: 'Model fallback',
+    title: 'Suggested step explanation after a model timeout (inspector)',
+    inspector: inspectorFixture && {
+      ...inspectorFixture,
+      explanation: {
+        target: 'Suggested step',
+        status: 'ready',
+        attempted: 'LLM',
+        used: 'Deterministic',
+        outcome: 'Fallback · Timeout',
+        routing: 'LLM preferred',
+        promptVersion: '—',
+        cache: '—',
+        latencyMs: 8004,
+        requests: 1,
+      },
+    },
+  },
+);
+
 export function getDemoState(id: string): DemoState {
   const state = demoStates.find((candidate) => candidate.id === id);
   if (!state) throw new Error(`Unknown demo state: ${id}`);

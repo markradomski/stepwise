@@ -1,95 +1,149 @@
 # Stepwise
 
-An adaptive maths practice prototype that reveals the right amount of help at the right time.
+An adaptive maths-practice prototype that reveals the right amount of help at the right time.
 
-Stepwise explores the difference between what a learning system knows internally and what should be shown to a learner at a given moment. The first topic is simple linear equations.
+Stepwise explores how a learning interface can maintain rich internal state while exposing only the support a learner currently needs. The topic is deliberately narrow (linear equations, three questions) so the interaction and system design can be examined closely.
 
-The project is intentionally narrow in scope.
+![Misconception feedback, with a contextual Help surface open](docs/assets/learner-misconception-help.png)
 
-## Stack
+## What this demonstrates
 
-React, TypeScript, Vite, CSS Modules, Vitest and React Testing Library.
+- **Continuous step-by-step working.** The given line, the learner's accepted steps and any system-suggested step read as one piece of reasoning, with authorship and uncertainty kept visibly distinct.
+- **Deterministic maths.** Validation, equivalence, misconception detection and completion use no maths library and no AI.
+- **Progressively exposed help.** Prompt, Hint, Example and Suggested next step escalate by explicit rules, one forward action at a time, in one compact surface.
+- **Progress is not mastery.** Visible question progress is separate from a hidden, illustrative mastery estimate.
+- **Model-backed explanations behind a narrow boundary.** A model may word an explanation; it never judges, diagnoses or advances.
+- **Evaluation-driven routing.** The model was compared with the deterministic baseline, and is used only where review showed added value.
 
-## Design
+## Product principles
 
-The visual prototype lives in [Figma](https://www.figma.com/design/DbgJ4GfXerydrZzYUhEvol).
+- Progress is not mastery.
+- Unrecognised does not mean wrong.
+- The system may know more than the learner needs to see.
+- Help should escalate deliberately.
+- AI may explain the system's judgement; it does not make the judgement.
+- Model use must demonstrate value over deterministic behaviour.
 
-## Status
-
-The learner UI follows the Figma prototype. The default route is a real three-question practice session, starting with `3(x + 2) = 18`, with:
-
-- truthful question progress (Question 1 of 3, 2 of 3, 3 of 3), a dedicated "Question complete" state that replaces the input with a Next question action (the solved working stays visible), and a final Practice complete state
-- contextual help: a single quiet launcher beside Check step opens one compact, embedded help surface that shows only the support currently relevant (prompt, hint or example), one forward action and, at most, one way back to earlier help. Support is deterministic and progressively exposed: it follows the learner's own actions and diagnosed difficulty, never time, and generic help can never escalate to the answer. Repeated difficulty changes which help is available next without auto-revealing it, and reviewing or closing help never counts as new help
-- optional explanation layer: an "Explain this" action beside feedback, a hint, an accepted step or a suggested step opens a small inline explanation of why it makes sense. It elaborates on deterministic feedback and working without controlling correctness or progression: correctness and misconception detection stay deterministic. Explanations come from a provider interface that receives a narrow structured request and returns display-only text that is validated before rendering; the only provider today is local and deterministic, and no external service is called
-- model-backed explanations (optional): the explanation provider can be switched to a language model on the server. Correctness, diagnosis and progression stay deterministic; the model only receives a narrow structured explanation request, its output is untrusted and validated before display, and the deterministic explanations remain the fallback. API keys stay server-side and the app works without any configuration. See [docs/EXPLANATION_MODEL_BOUNDARY.md](docs/EXPLANATION_MODEL_BOUNDARY.md)
-- one continuous working sequence: the given line, the learner's accepted steps and any system-suggested step read as a single piece of reasoning, while authorship (a labelled suggested step) and uncertainty (a recognised misconception versus an unrecognised attempt) stay visibly distinct
-- per-question content: each question defines its own generic prompts, hints, worked examples and misconception feedback
-- session-level learning state kept apart from the question on screen
-- a hidden internal mastery estimate, visible only in the inspector (`?inspector=1`) and never to the learner. It is a small illustrative rule, not a validated assessment model.
-
-Each question includes:
-
-- real step entry
-- deterministic validation, with no maths library or AI
-- multiple valid solution paths (distribute first, or divide first)
-- feedback for recognised misconceptions, with a stronger message when one repeats
-- an explicit interaction model: write the equation as it looks after one operation, one line at a time, shown on screen before the first step; the given equation is the first line of the working, accepted steps accumulate beneath it, and valid unsimplified steps (such as `x + 2 = 18/3`) get light guidance to simplify
-- recognition of simple equivalent forms, such as `(x + 2) = 18/3` or `x = 12/3`, while keeping the learner's own expression in the working
-- honest handling of uncertainty: a step it can't match is not called wrong, gets neutral wording and only a generic hint, and is never given a made-up diagnosis
-- progressive scaffolding: a prompt, hint, worked example and system-provided next step, each revealed only on request and one forward action at a time
-- a distinction between a correct answer and evidence of reasoning: a correct final answer that skips the working is acknowledged but doesn't complete the question
-
-Developer note:
-
-- `/` is the live interactive app, with nothing but the product on screen. `?inspector=1` adds the learning-state inspector.
-- `?dev=1` shows the live app with development navigation.
-- `?state=01` to `?state=06` are static visual previews. They show the development navigation and a "Static demo preview" banner, and their controls are disabled. "Return to Live" goes back to `/`.
-
-## Getting started
+## Try it
 
 ```bash
 npm install
 npm run dev
 ```
 
-## Scripts
+No deployed URL exists yet (see [deployment notes](#deployment-status)). Everything runs locally and works without any API key.
 
-- `npm run dev` starts the development server
-- `npm run build` type-checks and builds for production
-- `npm test` runs the test suite
-- `npm run typecheck` runs TypeScript without building
+| Route | What you get |
+| --- | --- |
+| `/` | The clean learner experience |
+| `?inspector=1` | Learner experience plus the internal state (assistance, session, explanation provider, routing, cache) |
+| `?dev=1` | Development navigation: Live, Inspector toggle and static previews |
+| `?state=01` … `?state=17` | Static visual reference states (disabled controls, banner): untouched, accepted, misconceptions, unrecognised, Prompt / Hint / Example, Suggested next step, completion, explanations, provider fallback |
+
+## Five-minute tour
+
+1. Open `/?inspector=1` and solve Question 1 normally: `x + 2 = 6`, then `x = 4`.
+2. Reload and enter `3x + 2 = 18` to see misconception handling. It is a recognised mistake; `6 + 3x = 18` is merely unrecognised and gets neutral wording.
+3. Open **Need help?** and step through **Get a hint**, **Show an example** and **Show next step**. Watch the inspector's assistance section change while the learner UI stays small.
+4. Press **Explain this** on the Suggested next step. With a key configured this is the one place the model is tried first; without one the deterministic explanation appears. Either way the inspector shows provider, routing and outcome.
+5. Open `?state=17` for a provider fallback example, then read [Model evaluation](#model-evaluation).
+
+## Architecture
+
+```mermaid
+flowchart TD
+  A[Learner input] --> B[Deterministic validator]
+  B --> C[Practice state]
+  C --> D[Assistance model]
+  C --> E[Session and mastery estimate]
+  C --> F[Explanation target]
+  F --> G{Routing policy}
+  G -->|accepted step, misconception, hint, example| H[Deterministic explanation]
+  G -->|suggested step| I[Model provider]
+  I --> J[Server proxy and versioned prompt]
+  J --> K[Untrusted output]
+  K --> L[Validation]
+  L -->|valid| M[Explanation UI]
+  L -->|invalid, timeout, rate limit, error| H
+  H --> M
+```
+
+| Trusted and deterministic | Untrusted | Validated model output |
+| --- | --- | --- |
+| Maths validation, canonical state, misconception detection, assistance escalation, question completion, mastery estimate | The wording a model returns | Title, body and an optional example, as plain text |
+
+The explanation output schema has **no fields** for correctness, misconception, next step, progress or mastery, and the validator rejects unknown fields, so a model cannot influence any of them. Technical detail: [docs/EXPLANATION_MODEL_BOUNDARY.md](docs/EXPLANATION_MODEL_BOUNDARY.md).
+
+## Model evaluation
+
+- **Model:** `claude-haiku-4-5-20251001` · **Prompt:** `explanation-prompt/1` · **Corpus:** 12 cases (11 supported, 1 unsupported)
+- **Reviewed result (prompt V1): Better 2 · Same 5 · Worse 4**
+- **Caveat:** the Better / Same / Worse review was performed by an AI assistant and has not yet been independently validated by a human.
+
+**Finding.** The model added value on Suggested next step explanations (2 of 2): it explained why a step is taken. Deterministic explanations were equal or better everywhere else. Routing is therefore hybrid: model first only for Suggested next step, deterministic for accepted steps, misconceptions, hints and examples, with deterministic fallback on every model route. The sample is small (two suggested-step cases, one run each), so this is evidence-informed, not proof.
+
+**Latency.** Model calls took about 2 s at the median (successful calls, V1) against effectively zero for deterministic text, so the model has to earn that delay and its extra failure modes.
+
+**Prompt V2** was written to stop the model putting future results in the optional `example` field. It removed that failure but regressed the two cases where V1 had added value and fixed none of the other recurring weaknesses, so it was evaluated and not adopted.
+
+### What the model got wrong
+
+- Dropped the negative sign in a Q3 bracket explanation ("the x and the 1").
+- Gave a generic, content-free explanation of an arithmetic error.
+- Ignored the learner's equivalent form `2x = 17 - 5`.
+- Put future results in the optional `example` field in 4 of 10 V1 outputs (not displayed by the UI).
+- V2 fixed the example leakage but caused other regressions.
+
+Full evidence: [docs/EXPLANATION_EVALUATION.md](docs/EXPLANATION_EVALUATION.md). Narrative: [docs/CASE_STUDY.md](docs/CASE_STUDY.md).
+
+## Engineering safeguards
+
+- API key is server-side only; the client cannot send prompts, only a structured explanation request
+- Versioned prompt registry and a structured response schema, validated on the server and again in the browser
+- Deterministic fallback, timeout handling, rate limiting, request dedupe and a bounded cache
+- Offline test suite; the live model evaluation is a separate, opt-in command
+
+## Verification
+
+- 486 tests, TypeScript typecheck and production build pass
+- The normal test suite never calls a model; the deterministic evaluation is offline
+- Live model evaluation is opt-in and uses the API
+
+```bash
+npm test                          # tests (offline)
+npm run typecheck
+npm run build
+npm run eval:explanations         # deterministic baseline, offline
+npm run eval:explanations:llm     # also evaluates the configured model (uses the API)
+npm run eval:explanations:review  # writes a human-review file to evaluation-output/
+npm run mock:llm                  # local stand-in for the model API
+```
 
 ## Optional model configuration
-
-Without configuration the deterministic provider is used.
 
 ```bash
 cp .env.example .env
 # set EXPLANATION_PROVIDER=llm and LLM_API_KEY=... (server-only; never prefix with VITE_)
-npm run dev
 ```
 
-The same explanation handler runs locally as Vite middleware and when deployed as Cloudflare Pages Functions
-(`functions/api/`; `wrangler pages deploy dist` serves both). It applies a per-client rate limit (default 10 a
-minute), shares identical in-flight requests, and keeps a small bounded cache of validated results. A rate-limited
-or failed model call falls back to the deterministic explanation. Limits are tunable in `.env.example`; they are
-in-memory and per instance.
+The same handler runs locally as Vite middleware and as Cloudflare Pages Functions (`functions/api/`). Limits are tunable in `.env.example` and are in-memory and per instance.
 
-Stepwise routes explanations by target type based on a reviewed evaluation against the deterministic baseline, not the model
-universally: the model is used first only for suggested-step explanations (better in 2 of 2 reviewed cases, small sample), and the
-deterministic provider handles everything else and is always the fallback. See
-[docs/EXPLANATION_EVALUATION.md](docs/EXPLANATION_EVALUATION.md).
+## Accessibility and known limitations
 
-```bash
-npm run eval:explanations         # deterministic baseline, offline
-npm run eval:explanations:llm     # also evaluates the configured model (opt-in, uses the API)
-npm run eval:explanations:review  # writes evaluation-output/explanation-review.md for human review
-npm run mock:llm                  # local stand-in for the model API, to try fallbacks without a key
-```
+Keyboard-only use works end to end (submit with Enter, Tab to Help, Explain this and their close actions), feedback never relies on colour alone, touch targets are at least 44px, and the static states were checked at 390px with no horizontal overflow. Known gaps: help and explanation bodies are polite live regions, so reopening seen content may be announced again by some screen readers; there has been no testing with real screen readers or learners; the Better / Same / Worse review awaits human validation; the mastery estimate is illustrative only.
 
-## Case study note
+## Deployment status
 
-Stepwise evaluates model-generated explanations against a deterministic baseline for correctness, grounding, scaffold safety,
-authorship, pedagogy and latency. Model use is routed only where reviewed outputs showed added value: in the first evaluation (12
-cases, one model) that was suggested-step explanations only. The reviewed judgements were made by an AI assistant and await a human
-check, and the sample is small.
+The Cloudflare adapter exists but has **not been deployed or production-tested**, and no git remote is configured. Remaining: create the Pages project, set the server-side secrets, configure `dist` as the build output, verify the Functions routes, and test rate-limit and cache behaviour live (state is per isolate).
+
+## Documents
+
+- [docs/CASE_STUDY.md](docs/CASE_STUDY.md): the product story
+- [docs/EXPLANATION_MODEL_BOUNDARY.md](docs/EXPLANATION_MODEL_BOUNDARY.md): the technical model boundary
+- [docs/EXPLANATION_EVALUATION.md](docs/EXPLANATION_EVALUATION.md): evaluation evidence
+- [docs/PORTFOLIO_SUMMARY.md](docs/PORTFOLIO_SUMMARY.md): short copy for a portfolio site
+- Design: [Figma](https://www.figma.com/design/DbgJ4GfXerydrZzYUhEvol)
+
+## Stack
+
+React, TypeScript, Vite, CSS Modules, Vitest and React Testing Library. No runtime dependencies beyond React.

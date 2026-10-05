@@ -1,5 +1,7 @@
 # Explanation model boundary
 
+See also: [README](../README.md) for the overview, [CASE_STUDY.md](CASE_STUDY.md) for the product story and [EXPLANATION_EVALUATION.md](EXPLANATION_EVALUATION.md) for the evidence.
+
 Stepwise can optionally use a language model to word explanations. The model never makes a maths decision.
 
 ## 1. What the model can do

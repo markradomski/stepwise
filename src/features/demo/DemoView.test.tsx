@@ -176,3 +176,21 @@ describe('explanation previews', () => {
   });
 });
 
+
+describe('review-path previews', () => {
+  it('shows an unrecognised step honestly, without a diagnosis', () => {
+    renderState('16');
+    expect(screen.getByText('Not recognised yet')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('I can’t quite match that step yet.');
+    expect(screen.queryByText(/wrong|incorrect|misconception/i)).not.toBeInTheDocument();
+  });
+
+  it('shows the provider fallback only in the inspector', () => {
+    renderState('17');
+    const inspector = within(screen.getByRole('complementary', { name: 'Learning state inspector' }));
+    expect(inspector.getByText('Fallback · Timeout')).toBeInTheDocument();
+    expect(inspector.getByText('Deterministic')).toBeInTheDocument();
+    expect(within(screen.getByRole('main')).queryByText(/timeout|fallback|LLM/i)).not.toBeInTheDocument();
+    expect(within(screen.getByRole('main')).getByText('Why this step works')).toBeInTheDocument();
+  });
+});
