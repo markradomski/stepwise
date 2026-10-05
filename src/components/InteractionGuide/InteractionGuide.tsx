@@ -10,17 +10,13 @@ export function InteractionGuide({ open }: Props) {
       <summary className={styles.summary}>How Stepwise works</summary>
       <div className={styles.body}>
         <p>Write one line of working at a time: the equation as it looks after one operation.</p>
-        <div className={styles.example}>
-          <p className="overline">Example</p>
-          <p className={styles.line}>
-            <MathExpression expression="2x + 4 = 10" size="small" />
-            <span className={styles.caption}>start</span>
-          </p>
-          <p className={styles.line}>
-            <MathExpression expression="2x = 6" size="small" />
-            <span className={styles.caption}>after subtracting 4 from both sides</span>
-          </p>
-        </div>
+        <p className={styles.example}>
+          <span className={styles.label}>Example</span>
+          <MathExpression expression="2x + 4 = 10" size="small" />
+          <span aria-hidden="true">→</span>
+          <MathExpression expression="2x = 6" size="small" />
+          <span className={styles.caption}>after subtracting 4 from both sides</span>
+        </p>
         <p>Write the equation, not the operation.</p>
       </div>
     </details>

@@ -100,7 +100,7 @@ describe('skipped steps', () => {
     expect(state.attemptCount).toBe(0);
     expect(state.rejectedExpression).toBeUndefined();
     expect(feedbackForState(state)).toEqual({
-      kind: 'neutral',
+      kind: 'success',
       message: 'That answer is correct. Can you show one step that gets you there?',
     });
     expect(learningStateFromPractice(state).lastValidation).toBe('Valid, skipped steps');

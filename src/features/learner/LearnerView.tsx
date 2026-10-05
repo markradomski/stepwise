@@ -12,7 +12,7 @@ import type { LearningState } from '../../lib/learningState';
 import styles from './LearnerView.module.css';
 
 export type LearnerViewProps = {
-  progress: { current: number; total: number; complete?: boolean };
+  progress?: { currentQuestion: number; totalQuestions: number; complete?: boolean };
   question: { instruction: string; expression: string };
   workingSteps: Array<{ expression: string; status: WorkingStepStatus; source?: WorkingStepSource }>;
   input?: {

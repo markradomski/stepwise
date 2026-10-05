@@ -2,7 +2,7 @@ import { Progress } from '../Progress/Progress';
 import styles from './QuestionShell.module.css';
 
 type Props = {
-  progress: { current: number; total: number; complete?: boolean };
+  progress?: { currentQuestion: number; totalQuestions: number; complete?: boolean };
   question: { instruction: string };
 };
 
@@ -18,11 +18,11 @@ export function QuestionShell({ progress, question }: Props) {
           </svg>
           <h1 className={styles.wordmark}>Stepwise</h1>
         </div>
-        <Progress {...progress} />
+        {progress && <Progress {...progress} />}
       </header>
       <section className={styles.question} aria-labelledby="question-heading">
         <h2 id="question-heading" className="overline">
-          Question {progress.current}
+          Practice question
         </h2>
         <p>{question.instruction}</p>
       </section>

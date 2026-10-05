@@ -33,7 +33,7 @@ export function feedbackForResult(result: ValidationResult, state: PracticeState
         : undefined;
     }
     return {
-      kind: 'neutral',
+      kind: 'success',
       message:
         result.canonicalExpression === practiceQuestion.goal
           ? 'That answer is correct. Can you show one step that gets you there?'

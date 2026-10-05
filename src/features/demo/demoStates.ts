@@ -6,7 +6,7 @@ export type DemoState = {
   id: string;
   title: string;
   shortTitle: string;
-  progress: { current: number; total: number; complete?: boolean };
+  progress: { currentQuestion: number; totalQuestions: number; complete?: boolean };
   question: { instruction: string; expression: string };
   workingSteps: Array<{ expression: string; status: WorkingStepStatus }>;
   input?: { value: string; state: 'empty' | 'focused' };
@@ -18,7 +18,7 @@ export type DemoState = {
 };
 
 const baseState = {
-  progress: { current: 2, total: 3 },
+  progress: { currentQuestion: 2, totalQuestions: 3 },
   question: { instruction: 'Solve the equation one step at a time.', expression: '3(x + 2) = 18' },
 };
 
@@ -78,7 +78,7 @@ export const demoStates: DemoState[] = [
     id: '05',
     shortTitle: 'Complete',
     title: 'Completed question',
-    progress: { current: 2, total: 3, complete: true },
+    progress: { currentQuestion: 2, totalQuestions: 3, complete: true },
     workingSteps: [
       { expression: '3x + 6 = 18', status: 'accepted' },
       { expression: '3x = 12', status: 'accepted' },

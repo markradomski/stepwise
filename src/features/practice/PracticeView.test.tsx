@@ -19,6 +19,33 @@ const mistake = '3x + 2 = 18';
 const learnerColumn = () => within(screen.getByRole('main'));
 const status = () => screen.getByRole('status');
 
+describe('single-question honesty', () => {
+  it('makes no multi-question progress claim', () => {
+    const { container } = render(<PracticeView />);
+    expect(screen.queryByText(/round/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/\b\d+ of \d+\b/)).not.toBeInTheDocument();
+    expect(container.querySelector('header p')).toBeNull();
+    expect(screen.getByText('Practice question')).toBeInTheDocument();
+  });
+
+  it('keeps the explanation and the core interaction on screen', () => {
+    render(<PracticeView />);
+    expect(screen.getByText('How Stepwise works')).toBeInTheDocument();
+    expect(screen.getByText('Write the equation, not the operation.')).toBeInTheDocument();
+    expect(screen.getByLabelText('Write the equation after your next step')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Check step' })).toBeInTheDocument();
+    expect(screen.getByRole('math', { name: '3(x + 2) = 18' })).toBeInTheDocument();
+  });
+
+  it('shows no progress after completing the question either', async () => {
+    const { submit } = setup();
+    await submit('x + 2 = 6');
+    await submit('x = 4');
+    expect(screen.queryByText(/round|\b\d+ of \d+\b|complete$/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Solved');
+  });
+});
+
 describe('interaction contract', () => {
   it('tells a first-time learner exactly what to write', () => {
     const { input } = setup();
@@ -200,7 +227,7 @@ describe('practice interaction', () => {
   ])('completes by the %s path and keeps the working history', async (_name, steps, count) => {
     const { submit } = setup();
     for (const step of steps) await submit(step);
-    expect(screen.getByText('Round 2 of 3')).toBeInTheDocument();
+    expect(screen.queryByText(/question \d of \d|round/i)).not.toBeInTheDocument();
     expect(status()).toHaveTextContent('Solved');
     expect(screen.getAllByText('Step accepted')).toHaveLength(count);
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();

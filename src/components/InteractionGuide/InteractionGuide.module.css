@@ -1,11 +1,13 @@
 .guide {
+  padding: 0 var(--space-4);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  background: var(--color-surface-sunken);
+  color: var(--color-text-muted);
 }
 
 .summary {
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-2) 0;
+  color: var(--color-text);
   font: var(--font-label);
   cursor: pointer;
 }
@@ -13,34 +15,27 @@
 .body {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-  padding: 0 var(--space-4) var(--space-3);
+  gap: var(--space-1);
+  padding-bottom: var(--space-3);
   font: var(--font-helper);
 }
 
 .example {
-  padding: var(--space-2) var(--space-3);
-  border-left: 3px solid var(--color-text-muted);
-  background: var(--color-surface);
-}
-
-.line {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  column-gap: var(--space-3);
+  gap: 0 var(--space-3);
+  color: var(--color-text);
 }
 
-.caption {
+.label {
+  font: var(--font-overline);
+  letter-spacing: 0.057em;
+  text-transform: uppercase;
   color: var(--color-text-muted);
 }
 
-@media (max-width: 40rem) {
-  .summary {
-    padding: var(--space-2) var(--space-3);
-  }
-
-  .body {
-    padding: 0 var(--space-3) var(--space-3);
-  }
+.caption {
+  font: var(--font-helper);
+  color: var(--color-text-muted);
 }

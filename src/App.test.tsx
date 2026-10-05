@@ -22,6 +22,12 @@ describe('static preview mode', () => {
     expect(preview.getByRole('link', { name: 'Return to Live' })).toBeInTheDocument();
   });
 
+  it('keeps the visual-reference progress inside the preview only', () => {
+    open('?state=01');
+    expect(screen.getByText('Question 2 of 3')).toBeInTheDocument();
+    expect(screen.queryByText(/round/i)).not.toBeInTheDocument();
+  });
+
   it('disables the fixture input and actions with native semantics', () => {
     open('?state=01');
     expect(input()).toBeDisabled();
@@ -111,6 +117,7 @@ describe('live mode', () => {
     expect(screen.getByRole('main')).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 1, name: 'Stepwise' })).toBeInTheDocument();
     expect(container.firstElementChild?.children).toHaveLength(1);
+    expect(screen.queryByText(/round|\b\d+ of \d+\b/i)).not.toBeInTheDocument();
   });
 
   it('adds only the dev navigation with dev=1', () => {

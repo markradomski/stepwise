@@ -10,7 +10,7 @@ describe('untouched question', () => {
   it('shows the question and a Check action', () => {
     renderState('01');
     expect(screen.getByRole('heading', { level: 1, name: 'Stepwise' })).toBeInTheDocument();
-    expect(screen.getByText('Round 2 of 3')).toBeInTheDocument();
+    expect(screen.getByText(/Question 2 of 3/)).toBeInTheDocument();
     expect(screen.getByRole('math', { name: '3(x + 2) = 18' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Check step' })).toBeInTheDocument();
     expect(screen.getByRole('status')).toBeEmptyDOMElement();
@@ -76,8 +76,8 @@ describe('learning state inspector', () => {
 describe('completed question', () => {
   it('shows completion without a mastery percentage', () => {
     renderState('05');
-    expect(screen.getByText('Round 2 of 3')).toBeInTheDocument();
-    expect(screen.getByText('complete')).toBeInTheDocument();
+    expect(screen.getByText(/Question 2 of 3/)).toBeInTheDocument();
+    expect(screen.getByText(/complete/)).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent('Solved');
     expect(screen.getAllByText('Step accepted')).toHaveLength(3);
     expect(screen.queryByText(/mastery|%/i)).not.toBeInTheDocument();

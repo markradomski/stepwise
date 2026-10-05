@@ -61,7 +61,6 @@ export function PracticeView({ showInspector }: Props) {
 
   return (
     <LearnerView
-      progress={{ current: 2, total: 3, complete: state.completed }}
       question={{ instruction: practiceQuestion.instruction, expression: practiceQuestion.initialExpression }}
       workingSteps={workingSteps}
       input={
