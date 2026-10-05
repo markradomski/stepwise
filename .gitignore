@@ -21,3 +21,6 @@ test-results
 CLAUDE.md
 
 evaluation-output
+
+.wrangler
+.dev.vars
